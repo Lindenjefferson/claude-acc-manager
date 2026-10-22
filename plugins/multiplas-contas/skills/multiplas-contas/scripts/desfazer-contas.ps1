@@ -29,8 +29,8 @@ Remove-BlocoClaudeMd
 Write-Host 'CLAUDE.md: bloco de contas removido'
 
 # A statusLine sai so se for a nossa; remoteControlAtStartup false fica (seguro sem o cc).
-Unregister-StatusLine
-Write-Host 'settings.json: statusLine de conta e uso removida (se era a nossa)'
+$m = Unregister-StatusLine
+if ($m) { Write-Host $m }
 
 $cc = Join-Path $Base 'cc.ps1'
 if (Test-Path $cc) { Rename-Item $cc 'cc.ps1.desativado' -Force; Write-Host 'cc desativado (cc.ps1.desativado); instalar.ps1 reativa' }

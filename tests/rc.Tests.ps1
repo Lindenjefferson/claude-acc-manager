@@ -77,6 +77,19 @@ Describe 'Set-RcDesligadoCompartilhado' {
         (Get-Item $settings).LastWriteTimeUtc | Should Be $antes
     }
 
+    It 'compartilhado: JSON invalido nao e regravado' {
+        $ruim = '{"theme":"dark",}'
+        Set-Settings $ruim
+        Set-RcDesligadoCompartilhado | Should Match 'invalido'
+        Get-Content -LiteralPath $settings -Raw | Should Be $ruim
+    }
+
+    It 'compartilhado: arquivo vazio vira objeto' {
+        Set-Settings ''
+        $null = Set-RcDesligadoCompartilhado
+        (Get-Settings).remoteControlAtStartup | Should Be $false
+    }
+
     It 'compartilhado: arquivo ausente' {
         Remove-Item $settings -ErrorAction SilentlyContinue
         $null = Set-RcDesligadoCompartilhado

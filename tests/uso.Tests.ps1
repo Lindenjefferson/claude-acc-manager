@@ -99,6 +99,24 @@ Describe 'Format-Uso, Get-MaxUso, Select-ContaSugerida' {
         Format-Uso $u | Should Be ($esperado + (' (salvo {0})' -f $q.ToString('HH:mm')))
     }
 
+    It 'salvo em outro dia traz a data' {
+        $q = $agora.AddDays(-3)
+        $u = ConvertTo-Uso (New-Util 2 27 $agora.AddHours(1)) 'salvo' $q $agora
+        Format-Uso $u | Should Be ($esperado + (' (salvo {0})' -f $q.ToString('dd/MM HH:mm')))
+    }
+
+    It 'salvo sem fetchedAtMs nao inventa 1970' {
+        $p = Join-Path $raiz '.claude-contas\semdata'
+        New-Item -ItemType Directory -Force $p | Out-Null
+        $est = @{ cachedUsageUtilization = @{ utilization = (New-Util 2 27 $agora.AddHours(2)) } }
+        [IO.File]::WriteAllText((Join-Path $p '.claude.json'), ($est | ConvertTo-Json -Depth 10))
+        $c = [pscustomobject]@{ Nome = 'semdata'; Pasta = $p; Mestre = $false }
+        $u = Get-UsoConta $c -agora $agora
+        $u.Fonte | Should Be 'salvo'
+        $u.Quando | Should Be $null
+        Format-Uso $u | Should Be ($esperado + ' (salvo, sem data)')
+    }
+
     It 'sugere a de menor maximo' {
         $usos = @{
             a = ConvertTo-Uso (New-Util 90 10 $agora.AddHours(1)) 'agora' $null $agora

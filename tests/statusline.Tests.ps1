@@ -87,6 +87,17 @@ Describe 'Register-StatusLine / Unregister-StatusLine' {
         Get-Content $settings -Raw | Should Be $outra
     }
 
+    It 'register e unregister: JSON invalido nao e regravado' {
+        $ruim = '{"theme":"dark",}'
+        [IO.File]::WriteAllText($settings, $ruim)
+        Register-StatusLine | Should Match 'invalido'
+        Get-Content $settings -Raw | Should Be $ruim
+        $ruim2 = '{"statusLine":{"type":"command","command":"x/statusline.ps1"},}'
+        [IO.File]::WriteAllText($settings, $ruim2)
+        Unregister-StatusLine | Should Match 'invalido'
+        Get-Content $settings -Raw | Should Be $ruim2
+    }
+
     It 'unregister: remove so a nossa' {
         [IO.File]::WriteAllText($settings, '{"theme":"dark"}')
         $null = Register-StatusLine

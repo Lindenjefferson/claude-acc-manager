@@ -178,9 +178,18 @@ function Invoke-ComConta($conta, [scriptblock]$bloco) {
 
 # Um cc chamado de dentro de uma sessao do Claude (abrir-conta.ps1, ! no prompt) herda as variaveis
 # CLAUDE* dela; com CLAUDE_CODE_CHILD_SESSION, a sessao nova nao salva transcript nem aparece no
-# ListAgents. Tira todas, menos CLAUDE_CONFIG_DIR (que o proprio cc controla). Devolve os nomes tirados.
-function Clear-AmbienteSessaoPai {
-    Get-ChildItem Env: | Where-Object { $_.Name -like 'CLAUDE*' -and $_.Name -ne 'CLAUDE_CONFIG_DIR' } | ForEach-Object {
+# ListAgents. Tira essas, menos CLAUDE_CONFIG_DIR (que o proprio cc controla) e as que o usuario
+# definiu no ambiente dele (User/Machine), como CLAUDE_CODE_GIT_BASH_PATH. Devolve os nomes tirados.
+function Get-NomesClaudePersistentes {
+    foreach ($alvo in 'User', 'Machine') {
+        [Environment]::GetEnvironmentVariables($alvo).Keys | Where-Object { "$_" -like 'CLAUDE*' }
+    }
+}
+
+function Clear-AmbienteSessaoPai([string[]]$persistentes = @(Get-NomesClaudePersistentes)) {
+    Get-ChildItem Env: | Where-Object {
+        $_.Name -like 'CLAUDE*' -and $_.Name -ne 'CLAUDE_CONFIG_DIR' -and $persistentes -notcontains $_.Name
+    } | ForEach-Object {
         Remove-Item "Env:$($_.Name)"
         $_.Name
     }
@@ -248,7 +257,7 @@ function Get-UsoConta($conta, [int]$timeoutSeg = 3, [datetime]$agora = (Get-Date
         if (Test-Path -LiteralPath $f) {
             $c = (Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json).cachedUsageUtilization
             if ($c) {
-                $quando = [DateTimeOffset]::FromUnixTimeMilliseconds([int64]$c.fetchedAtMs).LocalDateTime
+                $quando = if ($c.fetchedAtMs) { [DateTimeOffset]::FromUnixTimeMilliseconds([int64]$c.fetchedAtMs).LocalDateTime } else { $null }
                 return ConvertTo-Uso $c.utilization 'salvo' $quando $agora
             }
         }
@@ -272,7 +281,12 @@ function Format-Uso($uso) {
     if ($null -eq (Get-MaxUso $uso)) { return '-' }
     $p = { param($x) if ($null -eq $x) { '?' } else { "$x%" } }
     $t = Format-Janelas (& $p $uso.Cinco) (& $p $uso.Semana)
-    if ($uso.Fonte -eq 'salvo' -and $uso.Quando) { $t += ' (salvo {0})' -f $uso.Quando.ToString('HH:mm') }
+    if ($uso.Fonte -eq 'salvo') {
+        # Valor salvo em outro dia leva a data, para nao parecer de hoje.
+        $t += if (-not $uso.Quando) { ' (salvo, sem data)' }
+              elseif ($uso.Quando.Date -eq (Get-Date).Date) { ' (salvo {0})' -f $uso.Quando.ToString('HH:mm') }
+              else { ' (salvo {0})' -f $uso.Quando.ToString('dd/MM HH:mm') }
+    }
     $t
 }
 
@@ -328,15 +342,25 @@ function Add-NoInicioJson([string]$texto, [string]$par) {
     $texto.Substring(0, $i + 1) + "`n  $par," + $texto.Substring($i + 1)
 }
 
+function Test-JsonValido([string]$texto) {
+    try { $null = $texto | ConvertFrom-Json -ErrorAction Stop; return $true } catch { return $false }
+}
+
+$Script:MsgSettingsInvalido = 'settings.json invalido (JSON quebrado): nao mexi; corrija o arquivo e rode setup-contas.ps1'
+
+# Arquivo ausente ou vazio vale como {}. Valido = $false quando o JSON do usuario ja esta quebrado:
+# nesse caso nenhuma funcao grava nada.
 function Get-SettingsMestre {
     $f = Join-Path $Mestre 'settings.json'
-    $t = if (Test-Path -LiteralPath $f) { Get-Content -LiteralPath $f -Raw -Encoding UTF8 } else { '{}' }
-    [pscustomobject]@{ Arquivo = $f; Texto = $t }
+    $t = if (Test-Path -LiteralPath $f) { Get-Content -LiteralPath $f -Raw -Encoding UTF8 } else { $null }
+    if (-not "$t".Trim()) { $t = '{}' }
+    [pscustomobject]@{ Arquivo = $f; Texto = $t; Valido = (Test-JsonValido $t) }
 }
 
 # Sessoes abertas sem o cc (claude direto, IDE, app) nunca ligam o RC sozinhas.
 function Set-RcDesligadoCompartilhado {
     $s = Get-SettingsMestre
+    if (-not $s.Valido) { return $MsgSettingsInvalido }
     $chave = '"remoteControlAtStartup"\s*:\s*'
     if ($s.Texto -match ($chave + 'false')) { return $null }
     if ($s.Texto -match ($chave + 'true')) {
@@ -346,7 +370,7 @@ function Set-RcDesligadoCompartilhado {
         $novo = Add-NoInicioJson $s.Texto '"remoteControlAtStartup": false'
         $msg = 'settings.json: remoteControlAtStartup false gravado (RC so liga pelo cc)'
     }
-    $null = $novo | ConvertFrom-Json  # nao grava JSON quebrado
+    if (-not (Test-JsonValido $novo)) { return $MsgSettingsInvalido }
     Write-TextoSemBom $s.Arquivo $novo
     $msg
 }
@@ -382,26 +406,29 @@ $Script:MarcaStatusLine = 'statusline.ps1'
 
 function Register-StatusLine {
     $s = Get-SettingsMestre
+    if (-not $s.Valido) { return $MsgSettingsInvalido }
     if ($s.Texto -match '"statusLine"\s*:') {
         if ($s.Texto -match [regex]::Escape($MarcaStatusLine)) { return $null }
         return 'settings.json ja tem outra statusLine: nao mexi (a de conta e uso fica sem registrar)'
     }
     $cmd = 'powershell -NoProfile -ExecutionPolicy Bypass -File \"{0}/{1}\"' -f ($Base -replace '\\', '/'), $MarcaStatusLine
     $novo = Add-NoInicioJson $s.Texto ('"statusLine": {{"type": "command", "command": "{0}"}}' -f $cmd)
-    $null = $novo | ConvertFrom-Json
+    if (-not (Test-JsonValido $novo)) { return $MsgSettingsInvalido }
     Write-TextoSemBom $s.Arquivo $novo
     'settings.json: statusLine registrada (conta e uso da sessao)'
 }
 
 function Unregister-StatusLine {
     $s = Get-SettingsMestre
+    if (-not $s.Valido) { return $MsgSettingsInvalido }
     $obj = '"statusLine"\s*:\s*\{[^{}]*' + [regex]::Escape($MarcaStatusLine) + '[^{}]*\}'
-    if ($s.Texto -notmatch $obj) { return }
+    if ($s.Texto -notmatch $obj) { return $null }
     $novo = [regex]::Replace($s.Texto, $obj + '\s*,\s*', '')
     if ($novo -eq $s.Texto) { $novo = [regex]::Replace($s.Texto, ',\s*' + $obj, '') }
     if ($novo -eq $s.Texto) { $novo = [regex]::Replace($s.Texto, $obj, '') }
-    $null = $novo | ConvertFrom-Json
+    if (-not (Test-JsonValido $novo)) { return $MsgSettingsInvalido }
     Write-TextoSemBom $s.Arquivo $novo
+    'settings.json: statusLine de conta e uso removida'
 }
 
 # Atualiza o bloco entre as marcas no ~/.claude/CLAUDE.md a partir de modelo-CLAUDE.md.

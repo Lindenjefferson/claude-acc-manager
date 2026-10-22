@@ -24,6 +24,23 @@ Describe 'Clear-AmbienteSessaoPai' {
             foreach ($k in $guardado.Keys) { Set-Item "Env:$k" $guardado[$k] }
         }
     }
+
+    It 'mantem as CLAUDE* que o usuario definiu no ambiente dele (User/Machine)' {
+        $guardado = @{}
+        Get-ChildItem Env: | Where-Object Name -like 'CLAUDE*' | ForEach-Object { $guardado[$_.Name] = $_.Value }
+        try {
+            $env:CLAUDE_CODE_CHILD_SESSION = '1'
+            $env:CLAUDE_CODE_GIT_BASH_PATH = 'C:\Git\bin\bash.exe'
+            $tirados = Clear-AmbienteSessaoPai @('CLAUDE_CODE_GIT_BASH_PATH')
+            $env:CLAUDE_CODE_GIT_BASH_PATH | Should Be 'C:\Git\bin\bash.exe'
+            $env:CLAUDE_CODE_CHILD_SESSION | Should Be $null
+            ($tirados -contains 'CLAUDE_CODE_GIT_BASH_PATH') | Should Be $false
+        } finally {
+            Remove-Item Env:CLAUDE_CODE_GIT_BASH_PATH -ErrorAction SilentlyContinue
+            Remove-Item Env:ANTHROPIC_TESTE_MC, Env:CLAUDE_CONFIG_DIR -ErrorAction SilentlyContinue
+            foreach ($k in $guardado.Keys) { Set-Item "Env:$k" $guardado[$k] }
+        }
+    }
 }
 
 Remove-Item -LiteralPath $raiz -Recurse -Force -ErrorAction SilentlyContinue
