@@ -297,6 +297,13 @@ function Get-ArquivoRc([bool]$ligado) {
     $f
 }
 
+# Argumentos finais para o claude: os do usuario mais o --settings com a decisao do RC.
+# Se o usuario passou o proprio --settings, ele manda e o cc nao acrescenta outro.
+function Get-ArgsClaude($decisaoRc) {
+    if ($decisaoRc.SettingsDoUsuario) { return @($decisaoRc.Resto) }
+    @($decisaoRc.Resto) + @('--settings', (Get-ArquivoRc $decisaoRc.Ligado))
+}
+
 # Insere um par "chave": valor logo depois do primeiro "{" de um JSON, sem reformatar o resto.
 function Add-NoInicioJson([string]$texto, [string]$par) {
     if ($texto -match '^\s*\{\s*\}\s*$') { return "{`n  $par`n}`n" }
