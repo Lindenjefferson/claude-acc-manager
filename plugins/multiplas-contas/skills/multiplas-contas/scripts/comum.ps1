@@ -176,6 +176,16 @@ function Invoke-ComConta($conta, [scriptblock]$bloco) {
     }
 }
 
+# Um cc chamado de dentro de uma sessao do Claude (abrir-conta.ps1, ! no prompt) herda as variaveis
+# CLAUDE* dela; com CLAUDE_CODE_CHILD_SESSION, a sessao nova nao salva transcript nem aparece no
+# ListAgents. Tira todas, menos CLAUDE_CONFIG_DIR (que o proprio cc controla). Devolve os nomes tirados.
+function Clear-AmbienteSessaoPai {
+    Get-ChildItem Env: | Where-Object { $_.Name -like 'CLAUDE*' -and $_.Name -ne 'CLAUDE_CONFIG_DIR' } | ForEach-Object {
+        Remove-Item "Env:$($_.Name)"
+        $_.Name
+    }
+}
+
 function Get-StatusConta($conta) {
     Invoke-ComConta $conta { & $Claude auth status --json 2>$null | ConvertFrom-Json }
 }

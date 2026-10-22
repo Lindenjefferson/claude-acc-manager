@@ -2,6 +2,7 @@
 # cc -l                                                 lista as contas, o e-mail logado, o RC e o uso de cada uma
 # --rc / --no-rc liga ou desliga o Remote Control so nesta sessao (padrao: "rc" da conta no contas.json).
 . (Join-Path $PSScriptRoot 'comum.ps1')
+$null = Clear-AmbienteSessaoPai
 
 $cfg = Get-Contas
 $resto = @($args)

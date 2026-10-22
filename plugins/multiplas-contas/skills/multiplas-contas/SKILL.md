@@ -57,7 +57,8 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
 2. Senão, grave o conteúdo num arquivo e procure com ListAgents uma sessão cujo nome termine em "(<conta alvo>)".
 3. Se não houver, rode `~/.claude-contas/abrir-conta.ps1 <conta alvo> <pasta>`, que abre uma janela nova, e procure a sessão de novo.
 4. Peça por SendMessage que ela confira a própria conta com `claude auth status --json` e publique o arquivo.
-5. O modo automático dela pede a aprovação do usuário na janela dela. Isso é esperado; avise o usuário.
+5. O `cc` tira as variáveis `CLAUDE*` herdadas desta sessão (menos `CLAUDE_CONFIG_DIR`); sem isso, a janela nova abriria com "Transcript saving is off" e não apareceria no ListAgents.
+6. O modo automático dela pede a aprovação do usuário na janela dela. Isso é esperado; avise o usuário.
 
 Claude in Chrome não precisa disso: funciona a partir de qualquer conta. O campo `chrome` do `contas.json` só registra em qual conta a extensão está logada (aparece no `cc -l` e no CLAUDE.md).
 
