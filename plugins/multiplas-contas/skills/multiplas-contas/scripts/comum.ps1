@@ -5,6 +5,7 @@
 
 $Script:Base   = Join-Path $env:USERPROFILE '.claude-contas'
 $Script:Mestre = Join-Path $env:USERPROFILE '.claude'
+$Script:EstadoMestre = Join-Path $env:USERPROFILE '.claude.json'  # .claude.json da conta da pasta mestre
 
 $Script:Claude = Get-Command claude.exe -CommandType Application -ErrorAction SilentlyContinue |
     Where-Object { $_.Source -notlike "$Base*" } | Select-Object -First 1 -ExpandProperty Source
@@ -177,6 +178,94 @@ function Invoke-ComConta($conta, [scriptblock]$bloco) {
 
 function Get-StatusConta($conta) {
     Invoke-ComConta $conta { & $Claude auth status --json 2>$null | ConvertFrom-Json }
+}
+
+# ---- uso (janela de 5h e semanal), o mesmo que o /usage mostra ----
+# O token da conta e lido do .credentials.json dela so em memoria: nunca copiado, gravado,
+# impresso nem renovado aqui. Sem token valido, vale o ultimo uso que o Claude salvou na conta.
+
+function Get-ArquivoEstado($conta) {
+    if ($conta.Mestre) { $EstadoMestre } else { Join-Path $conta.Pasta '.claude.json' }
+}
+
+function Get-TokenConta($conta, [datetime]$agora = (Get-Date)) {
+    try {
+        $f = Join-Path $conta.Pasta '.credentials.json'
+        if (-not (Test-Path -LiteralPath $f)) { return $null }
+        $o = (Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json).claudeAiOauth
+        $limite = [DateTimeOffset]::new($agora.AddSeconds(60)).ToUnixTimeMilliseconds()
+        if (-not $o.accessToken -or [int64]$o.expiresAt -le $limite) { return $null }
+        return $o.accessToken
+    } catch { return $null }
+}
+
+function Invoke-UsoApi([string]$token, [int]$timeoutSeg = 3) {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+    Invoke-RestMethod -Uri 'https://api.anthropic.com/api/oauth/usage' -TimeoutSec $timeoutSeg -ErrorAction Stop -Headers @{
+        Authorization    = "Bearer $token"
+        'anthropic-beta' = 'oauth-2025-04-20'
+    }
+}
+
+function ConvertTo-DataLocal($v) {
+    if (-not $v) { return $null }
+    if ($v -is [datetime]) { return $v.ToLocalTime() }
+    try { return [DateTimeOffset]::Parse([string]$v, [Globalization.CultureInfo]::InvariantCulture).LocalDateTime } catch { return $null }
+}
+
+function ConvertTo-Uso($util, [string]$fonte, $quando, [datetime]$agora = (Get-Date)) {
+    $r = [ordered]@{ Cinco = $null; Semana = $null; ResetCinco = $null; ResetSemana = $null; Fonte = $null; Quando = $null }
+    if (-not $util) { return [pscustomobject]$r }
+    foreach ($j in @(@('five_hour', 'Cinco', 'ResetCinco'), @('seven_day', 'Semana', 'ResetSemana'))) {
+        $w = $util.($j[0])
+        if ($null -eq $w -or $null -eq $w.utilization) { continue }
+        $reset = ConvertTo-DataLocal $w.resets_at
+        # Janela que ja reiniciou: o uso dela voltou a zero.
+        if ($reset -and $reset -le $agora) { $r[$j[1]] = 0 }
+        else { $r[$j[1]] = [int][math]::Round([double]$w.utilization); $r[$j[2]] = $reset }
+    }
+    if ($null -ne $r.Cinco -or $null -ne $r.Semana) { $r.Fonte = $fonte; $r.Quando = $quando }
+    [pscustomobject]$r
+}
+
+function Get-UsoConta($conta, [int]$timeoutSeg = 3, [datetime]$agora = (Get-Date)) {
+    $token = Get-TokenConta $conta $agora
+    if ($token) {
+        try { return ConvertTo-Uso (Invoke-UsoApi $token $timeoutSeg) 'agora' $null $agora } catch { }
+    }
+    try {
+        $f = Get-ArquivoEstado $conta
+        if (Test-Path -LiteralPath $f) {
+            $c = (Get-Content -LiteralPath $f -Raw -Encoding UTF8 | ConvertFrom-Json).cachedUsageUtilization
+            if ($c) {
+                $quando = [DateTimeOffset]::FromUnixTimeMilliseconds([int64]$c.fetchedAtMs).LocalDateTime
+                return ConvertTo-Uso $c.utilization 'salvo' $quando $agora
+            }
+        }
+    } catch { }
+    ConvertTo-Uso $null $null $null $agora
+}
+
+function Get-MaxUso($uso) {
+    $v = @($uso.Cinco, $uso.Semana) | Where-Object { $null -ne $_ }
+    if (-not $v) { return $null }
+    ($v | Measure-Object -Maximum).Maximum
+}
+
+function Format-Uso($uso) {
+    if ($null -eq (Get-MaxUso $uso)) { return '-' }
+    $p = { param($x) if ($null -eq $x) { '?' } else { "$x%" } }
+    $t = '5h {0} / sem {1}' -f (& $p $uso.Cinco), (& $p $uso.Semana)
+    if ($uso.Fonte -eq 'salvo' -and $uso.Quando) { $t += ' (salvo {0})' -f $uso.Quando.ToString('HH:mm') }
+    $t
+}
+
+function Select-ContaSugerida([hashtable]$usos, [string]$excluir) {
+    $c = foreach ($k in $usos.Keys) {
+        $m = Get-MaxUso $usos[$k]
+        if ($k -ne $excluir -and $null -ne $m) { [pscustomobject]@{ Nome = $k; Max = $m } }
+    }
+    ($c | Sort-Object Max | Select-Object -First 1).Nome
 }
 
 # Atualiza o bloco entre as marcas no ~/.claude/CLAUDE.md a partir de modelo-CLAUDE.md.
