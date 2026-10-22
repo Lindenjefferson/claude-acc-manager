@@ -8,6 +8,8 @@ Este PC tem uma conta principal do Claude Code e contas secundárias, todas com 
 
 - Abro cada conta com `cc <conta>`, no terminal ou na barra de endereço do Explorer (`{{ATALHO}}` / `{{ATALHO}} <conta>`). Scripts e `contas.json` ficam em `~/.claude-contas`.
 - Para saber em qual conta esta sessão está, rode `claude auth status --json` (campo `email`). O nome da sessão, "pasta (conta)", também indica a conta.
+- O Remote Control só liga ao abrir pelo `cc`: nas contas com `"rc": true` no `contas.json`, ou com `cc <conta> --rc`. O `settings.json` compartilhado tem `remoteControlAtStartup: false`; não mude isso para `true`, porque ligaria o RC também nas contas em que o usuário não quer.
+- `cc -l` mostra o uso de cada conta (5h e semanal) e se o RC liga por padrão nela. A status line mostra a conta e o uso da sessão.
 
 ## O que é compartilhado
 - Cada conta tem login (`.credentials.json`) e `.claude.json` próprios. Os conectores do claude.ai também são por conta.

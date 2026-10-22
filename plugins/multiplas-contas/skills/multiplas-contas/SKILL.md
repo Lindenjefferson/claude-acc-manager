@@ -16,7 +16,10 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
 - Cada conta tem uma pasta de config própria (`CLAUDE_CONFIG_DIR`) com seu login (`.credentials.json`) e seu `.claude.json`.
 - Todo o resto aponta para `~/.claude` (a "pasta mestre"): `settings.json`, `history.jsonl`, `CLAUDE.md`, `keybindings.json` por link de arquivo; `projects/`, `skills/`, `plugins/`, `sessions/` etc. por junction. Assim, histórico, memória, skills, plugins e a lista de sessões são iguais em todas as contas.
 - A conta já logada em `~/.claude` usa a própria pasta mestre (`"pasta": "~/.claude"`) e roda **sem** `CLAUDE_CONFIG_DIR`.
-- `cc [conta] [args]` abre o Claude na conta (sem conta = padrão), confere o e-mail logado com `claude auth status --json` e nomeia a sessão "pasta (conta)". `cc -l` lista as contas.
+- `cc [conta] [args]` abre o Claude na conta (sem conta = padrão), confere o e-mail logado com `claude auth status --json` e nomeia a sessão "pasta (conta)". `cc -l` lista as contas, se o RC liga por padrão em cada uma e o uso de cada uma (janela de 5h e semanal).
+- **Remote Control por conta:** o `settings.json` é compartilhado, então o `cc` decide o RC de cada sessão passando `--settings ~/.claude-contas/rc/ligado.json` ou `desligado.json`. Liga só nas contas com `"rc": true` no `contas.json`; `cc <conta> --rc [nome]` liga e `--no-rc` desliga, só naquela sessão. O `settings.json` compartilhado fica com `remoteControlAtStartup: false` (gravado pelo `setup-contas.ps1` e conferido a cada `cc`), para que sessões abertas sem o `cc` (claude direto, IDE, app) não liguem o RC.
+- **Uso:** o `cc` consulta `api.anthropic.com/api/oauth/usage` com o token lido, só em memória, do `.credentials.json` da própria conta. Se o token venceu (ele só é renovado quando a conta roda), mostra o último uso que a conta salvou no `.claude.json`, com o horário. Ao abrir uma conta com uso igual ou acima de `avisoUso` (padrão 80) na janela de 5h ou na semanal, o `cc` avisa, sugere a conta com mais folga e pergunta antes de abrir (no modo `-p`, só avisa em stderr).
+- **Status line:** `statusline.ps1` mostra `<conta> | 5h x% / sem y%`, em amarelo a partir de `avisoUso` e em vermelho a partir de 95%. O `setup-contas.ps1` registra no `settings.json` só se não houver outra status line.
 - Na barra de endereço do Explorer, o atalho (padrão `cc`) abre o PowerShell na pasta atual com `cc`. O Explorer não repassa a pasta para comandos do App Paths, então `explorer/claude-aqui.ps1` descobre a pasta pela janela do Explorer que está na frente.
 - Uma conta nova recebe só as chaves de configuração do `~/.claude.json` (MCPs, projetos confiáveis etc.), nunca os dados da conta. Conectores do claude.ai são por conta e se configuram no site.
 
@@ -28,6 +31,7 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
    - nome curto e e-mail de cada **secundária**, quantas forem;
    - em qual conta a extensão Claude in Chrome está logada, se o usuário usa a extensão (campo `chrome`; o Claude Code não consegue detectar isso sozinho);
    - o atalho do Explorer (padrão `cc`).
+   - em quais contas o Remote Control deve ligar por padrão (campo `"rc": true`; sem ele, o RC fica desligado). Contas de trabalho geralmente ficam desligadas.
    O caso comum é a principal já estar logada em `~/.claude` (passo 2) e as secundárias serem adicionadas depois.
    - **Só uma conta tem `"pasta": "~/.claude"`:** a que está logada lá. As outras ficam em `~/.claude-contas/<nome>` sem precisar do campo. Se nenhuma conta tiver `pasta`, a principal usa `~/.claude`.
    - Se o e-mail logado em `~/.claude` for o de uma secundária, é ela que recebe `"pasta": "~/.claude"`, e a principal ganha pasta própria (com um `/login`). Explique isso ao usuário.
@@ -41,6 +45,7 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
 
 ## Manutenção
 - **Adicionar conta secundária:** acrescente a conta em `~/.claude-contas/contas.json` e rode `~/.claude-contas/setup-contas.ps1`, que é idempotente e também atualiza o CLAUDE.md. Depois o usuário roda `cc <nova>` e faz `/login`.
+- **Mudar o RC padrão de uma conta ou o limite do aviso de uso:** edite `"rc"` da conta ou `"avisoUso"` no `contas.json`. Vale no próximo `cc`.
 - **Trocar a principal, o padrão, a conta do Chrome ou o atalho:** edite `contas.json` e rode `setup-contas.ps1`. Se mudou o atalho, rode `instalar.ps1`, que registra o novo; apague à mão a chave antiga em `HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\<antigo>.exe`.
 - **Remover uma conta:** primeiro tire os links da pasta dela com `. ~/.claude-contas/comum.ps1; Remove-LinksConta ((Get-Contas).Contas | ? Nome -eq '<conta>')`. Confira que não sobrou link na pasta (`Get-ChildItem -Force | ? LinkType`). Só então apague a pasta, tire a conta do `contas.json` e rode `setup-contas.ps1`.
 - **Depois de atualizar o plugin:** rode `scripts/instalar.ps1` de novo para copiar os scripts novos. Ele não refaz o backup nem toca no `contas.json`.
@@ -67,3 +72,6 @@ Claude in Chrome não precisa disso: funciona a partir de qualquer conta. O camp
 - **"cc não é reconhecido":** o terminal foi aberto antes da instalação. Abra outro.
 - **Aviso "logada como X, esperado Y":** o `/login` foi feito com o e-mail errado naquela pasta. Rode `/logout` e `/login` dentro de `cc <conta>`.
 - **Mensagem "alteração levada para a mestre":** um programa salvou por cima de um link e o `cc` refez o link. O conteúdo anterior fica em `~/.claude-contas/backups`.
+- **Uso aparece como "(salvo HH:mm)":** o token daquela conta venceu, então o valor é o último que ela salvou. Abrir a conta com `cc <conta>` atualiza. O `cc` não renova o token sozinho de propósito.
+- **Status line de conta e uso não aparece:** o `settings.json` já tinha outra `statusLine`, e o instalador não mexe nela. Para usar a nossa, tire a outra e rode `setup-contas.ps1`.
+- **RC ligou numa conta sem `rc`:** confira se alguém pôs `remoteControlAtStartup: true` no `settings.json` compartilhado (o `cc` volta para `false` ao abrir) ou se a sessão foi aberta com `--rc`.
