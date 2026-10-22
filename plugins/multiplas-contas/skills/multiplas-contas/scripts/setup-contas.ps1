@@ -7,6 +7,7 @@ $cfg = Get-Contas
 if (-not $cfg.Principal) { throw 'Falta "principal" em contas.json' }
 if (-not ($cfg.Contas.Nome -contains $cfg.Padrao)) { throw "Conta padrao '$($cfg.Padrao)' nao existe em contas.json" }
 if (-not ($cfg.Contas.Nome -contains $cfg.Publicar)) { throw "Conta principal/de publicar '$($cfg.Publicar)' nao existe em contas.json" }
+if ($cfg.Chrome -and -not ($cfg.Contas.Nome -contains $cfg.Chrome)) { throw "Conta do Chrome '$($cfg.Chrome)' nao existe em contas.json" }
 if (@($cfg.Contas | Where-Object Mestre).Count -gt 1) { throw 'Mais de uma conta usa a pasta mestre ~/.claude' }
 
 # Antes dos links: se o CLAUDE.md ainda nao existir, ele precisa existir para ser ligado.

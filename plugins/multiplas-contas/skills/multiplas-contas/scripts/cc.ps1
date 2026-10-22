@@ -11,9 +11,12 @@ if ($resto.Count -and $resto[0] -in '-l', '--listar', '--contas') {
         $logado = if (-not $s) { 'pasta nao criada (rode setup-contas.ps1)' }
                   elseif ($s.loggedIn) { $s.email + $(if ($s.email -ne $c.Email) { '  <-- DIFERENTE do configurado' }) }
                   else { 'nao logada' }
-        [pscustomobject]@{ Conta = $c.Nome + $(if ($c.Nome -eq $cfg.Padrao) { ' *' }); Esperado = $c.Email; Logado = $logado }
+        $papel = @()
+        if ($c.Nome -eq $cfg.Publicar) { $papel += 'principal' }
+        if ($c.Nome -eq $cfg.Chrome) { $papel += 'Chrome' }
+        [pscustomobject]@{ Conta = $c.Nome + $(if ($c.Nome -eq $cfg.Padrao) { ' *' }); Papel = ($papel -join ', '); Esperado = $c.Email; Logado = $logado }
     }) | Format-Table -AutoSize | Out-String -Width 300 | Write-Host
-    Write-Host '* = conta padrao (cc sem argumento)'
+    Write-Host '* = conta padrao (cc sem argumento); Chrome = conta logada na extensao Claude in Chrome'
     return
 }
 

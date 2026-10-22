@@ -6,7 +6,7 @@ description: Instala e mantém várias contas do Claude Code no Windows (uma pri
 # Múltiplas contas do Claude Code (Windows)
 
 O usuário tem **uma conta principal** e **quantas contas secundárias quiser**:
-- A principal é a padrão do `cc` e a única que pode publicar artefatos.
+- A principal é a padrão do `cc` e onde os artefatos são publicados, salvo indicação explícita do usuário (com confirmação).
 - As secundárias usam o mesmo ambiente e só mudam o login, por exemplo para ter mais cota.
 - Os nomes das contas são escolhidos pelo usuário. Não presuma nomes nem quantidade.
 
@@ -26,6 +26,7 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
 3. Pergunte ao usuário, de uma vez:
    - nome curto e e-mail da **conta principal**;
    - nome curto e e-mail de cada **secundária**, quantas forem;
+   - em qual conta a extensão Claude in Chrome está logada, se o usuário usa a extensão (campo `chrome`; o Claude Code não consegue detectar isso sozinho);
    - o atalho do Explorer (padrão `cc`).
    A conta cujo e-mail apareceu no passo 2 recebe `"pasta": "~/.claude"`, porque já está logada lá; explique isso. Pode ser a principal ou uma secundária. Não copie `.credentials.json` de uma pasta para outra.
 4. Escreva `~/.claude-contas/contas.json` em UTF-8 sem BOM, no formato de `scripts/contas.exemplo.json`, com `"principal": "<nome>"`. Se o usuário quiser que o `cc` sem argumento abra outra conta, acrescente `"padrao": "<nome>"`; a principal continua sendo a única que publica.
@@ -37,18 +38,20 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
 
 ## Manutenção
 - **Adicionar conta secundária:** acrescente a conta em `~/.claude-contas/contas.json` e rode `~/.claude-contas/setup-contas.ps1`, que é idempotente e também atualiza o CLAUDE.md. Depois o usuário roda `cc <nova>` e faz `/login`.
-- **Trocar a principal, o padrão ou o atalho:** edite `contas.json` e rode `setup-contas.ps1`. Se mudou o atalho, rode `instalar.ps1`, que registra o novo; apague à mão a chave antiga em `HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\<antigo>.exe`.
+- **Trocar a principal, o padrão, a conta do Chrome ou o atalho:** edite `contas.json` e rode `setup-contas.ps1`. Se mudou o atalho, rode `instalar.ps1`, que registra o novo; apague à mão a chave antiga em `HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\<antigo>.exe`.
 - **Remover uma conta:** primeiro tire os links da pasta dela com `. ~/.claude-contas/comum.ps1; Remove-LinksConta ((Get-Contas).Contas | ? Nome -eq '<conta>')`. Confira que não sobrou link na pasta (`Get-ChildItem -Force | ? LinkType`). Só então apague a pasta, tire a conta do `contas.json` e rode `setup-contas.ps1`.
 - **Depois de atualizar o plugin:** rode `scripts/instalar.ps1` de novo para copiar os scripts novos. Ele não refaz o backup nem toca no `contas.json`.
 - **Desfazer:** `~/.claude-contas/desfazer-contas.ps1` remove links, PATH, atalho e o bloco do CLAUDE.md. Com `-ApagarPastas`, apaga também as pastas das contas extras.
 
-## Publicar artefato a partir de uma conta secundária
-1. Grave o conteúdo num arquivo.
-2. Procure com ListAgents uma sessão cujo nome termine em "(<conta principal>)".
-3. Se não houver, rode `~/.claude-contas/abrir-conta.ps1 <conta principal> <pasta>`, que abre uma janela nova, e procure a sessão de novo.
-4. Peça por SendMessage que ela confira a conta com `claude auth status --json` e publique o arquivo.
+## Publicar artefato em outra conta
+- **Conta alvo:** a principal, se o usuário não indicou nenhuma. Se ele indicou outra, confirme antes com AskUserQuestion, mostrando nome e e-mail ("Publicar na conta X (email), não na principal?"). Só siga com um sim. Nunca troque a conta alvo por conta própria.
+1. Confira a conta da sessão atual com `claude auth status --json`. Se já for a conta alvo, publique aqui.
+2. Senão, grave o conteúdo num arquivo e procure com ListAgents uma sessão cujo nome termine em "(<conta alvo>)".
+3. Se não houver, rode `~/.claude-contas/abrir-conta.ps1 <conta alvo> <pasta>`, que abre uma janela nova, e procure a sessão de novo.
+4. Peça por SendMessage que ela confira a própria conta com `claude auth status --json` e publique o arquivo.
 5. O modo automático dela pede a aprovação do usuário na janela dela. Isso é esperado; avise o usuário.
-Claude in Chrome não precisa disso: funciona em qualquer conta.
+
+Claude in Chrome não precisa disso: funciona a partir de qualquer conta. O campo `chrome` do `contas.json` só registra em qual conta a extensão está logada (aparece no `cc -l` e no CLAUDE.md).
 
 ## Nunca
 - `Remove-Item -Recurse` (ou apagar pelo Explorer) numa pasta de conta que ainda tem junctions. Isso apaga o conteúdo real de `~/.claude`. Use `Remove-LinksConta` ou `desfazer-contas.ps1`.

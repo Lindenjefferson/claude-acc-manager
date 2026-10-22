@@ -44,6 +44,8 @@ function Get-Contas {
         Padrao   = $(if ($cfg.padrao) { $cfg.padrao } else { $principal })
         Publicar = $(if ($cfg.publicar) { $cfg.publicar } else { $principal })
         Atalho   = $(if ($cfg.atalhoExplorer) { $cfg.atalhoExplorer } else { 'cc' })
+        # Conta em que a extensao Claude in Chrome esta logada (informada pelo usuario; nao da para detectar).
+        Chrome   = $cfg.chrome
         Contas   = @($lista)
     }
 }
@@ -178,8 +180,11 @@ function Update-ClaudeMd {
         '| {0} | {1} | {2} | {3} |' -f $c.Nome, $papel, $c.Email, $p
     }
     $pub = $cfg.Contas | Where-Object Nome -eq $cfg.Publicar
+    $chr = $cfg.Contas | Where-Object Nome -eq $cfg.Chrome
+    $chrome = if ($chr) { '`{0}` ({1})' -f $chr.Nome, $chr.Email } else { "n$([char]0xE3)o informada" }
     $bloco = $modelo.Replace('{{TABELA}}', ($linhas -join "`n")).
-        Replace('{{PUBLICAR}}', $cfg.Publicar).Replace('{{EMAIL_PUBLICAR}}', $pub.Email).Replace('{{ATALHO}}', $cfg.Atalho)
+        Replace('{{PUBLICAR}}', $cfg.Publicar).Replace('{{EMAIL_PUBLICAR}}', $pub.Email).Replace('{{ATALHO}}', $cfg.Atalho).
+        Replace('{{CHROME}}', $chrome)
     $bloco = "$MarcaInicio`n$($bloco.Trim())`n$MarcaFim"
 
     $md = Join-Path $Mestre 'CLAUDE.md'
