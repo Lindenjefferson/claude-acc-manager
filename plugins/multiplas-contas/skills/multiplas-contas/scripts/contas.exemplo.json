@@ -3,8 +3,8 @@
   "atalhoExplorer": "cc",
   "chrome": "principal",
   "contas": {
-    "principal":   { "email": "voce@exemplo.com" },
-    "secundaria1": { "email": "outra@exemplo.com", "pasta": "~/.claude" },
+    "principal":   { "email": "voce@exemplo.com", "pasta": "~/.claude" },
+    "secundaria1": { "email": "outra@exemplo.com" },
     "secundaria2": { "email": "mais-uma@exemplo.com" }
   }
 }

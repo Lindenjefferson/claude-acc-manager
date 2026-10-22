@@ -28,7 +28,10 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
    - nome curto e e-mail de cada **secundária**, quantas forem;
    - em qual conta a extensão Claude in Chrome está logada, se o usuário usa a extensão (campo `chrome`; o Claude Code não consegue detectar isso sozinho);
    - o atalho do Explorer (padrão `cc`).
-   A conta cujo e-mail apareceu no passo 2 recebe `"pasta": "~/.claude"`, porque já está logada lá; explique isso. Pode ser a principal ou uma secundária. Não copie `.credentials.json` de uma pasta para outra.
+   O caso comum é a principal já estar logada em `~/.claude` (passo 2) e as secundárias serem adicionadas depois.
+   - **Só uma conta tem `"pasta": "~/.claude"`:** a que está logada lá. As outras ficam em `~/.claude-contas/<nome>` sem precisar do campo. Se nenhuma conta tiver `pasta`, a principal usa `~/.claude`.
+   - Se o e-mail logado em `~/.claude` for o de uma secundária, é ela que recebe `"pasta": "~/.claude"`, e a principal ganha pasta própria (com um `/login`). Explique isso ao usuário.
+   - Não copie `.credentials.json` de uma pasta para outra.
 4. Escreva `~/.claude-contas/contas.json` em UTF-8 sem BOM, no formato de `scripts/contas.exemplo.json`, com `"principal": "<nome>"`. Se o usuário quiser que o `cc` sem argumento abra outra conta, acrescente `"padrao": "<nome>"`; a principal continua sendo a única que publica.
 5. Rode `scripts/instalar.ps1`. Ele faz backup na primeira vez, copia os scripts, cria as pastas e os links, põe `~/.claude-contas/bin` no PATH, registra o atalho do Explorer e escreve o bloco de contas no `~/.claude/CLAUDE.md` (entre marcas `<!-- multiplas-contas:... -->`, preservando o resto do arquivo).
 6. Passe ao usuário os próximos passos:

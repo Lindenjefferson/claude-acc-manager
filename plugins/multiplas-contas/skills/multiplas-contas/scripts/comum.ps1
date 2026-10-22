@@ -27,8 +27,13 @@ $Script:MarcaFim    = '<!-- multiplas-contas:fim -->'
 
 function Get-Contas {
     $cfg = Get-Content (Join-Path $Base 'contas.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+    $principal = if ($cfg.principal) { $cfg.principal } else { $cfg.padrao }
+    # So uma conta usa a pasta mestre ~/.claude: a que tiver "pasta" ou, se nenhuma tiver, a principal.
+    $algumaComPasta = [bool]($cfg.contas.PSObject.Properties | Where-Object { $_.Value.pasta })
     $lista = foreach ($p in $cfg.contas.PSObject.Properties) {
-        $pasta = if ($p.Value.pasta) { $p.Value.pasta -replace '^~', $env:USERPROFILE } else { Join-Path $Base $p.Name }
+        $pasta = if ($p.Value.pasta) { $p.Value.pasta -replace '^~', $env:USERPROFILE }
+                 elseif (-not $algumaComPasta -and $p.Name -eq $principal) { $Mestre }
+                 else { Join-Path $Base $p.Name }
         $pasta = [IO.Path]::GetFullPath($pasta)
         [pscustomobject]@{
             Nome   = $p.Name
@@ -37,8 +42,7 @@ function Get-Contas {
             Mestre = ($pasta.TrimEnd('\') -eq $Mestre.TrimEnd('\'))
         }
     }
-    # "principal" e a conta padrao do cc e a unica que publica; "padrao"/"publicar" separam os dois papeis.
-    $principal = if ($cfg.principal) { $cfg.principal } else { $cfg.padrao }
+    # "principal" e a conta padrao do cc e onde se publica; "padrao"/"publicar" separam os dois papeis.
     [pscustomobject]@{
         Principal = $principal
         Padrao   = $(if ($cfg.padrao) { $cfg.padrao } else { $principal })
