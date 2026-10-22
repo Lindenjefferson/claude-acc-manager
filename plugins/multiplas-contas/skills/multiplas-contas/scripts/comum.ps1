@@ -335,6 +335,59 @@ function Set-RcDesligadoCompartilhado {
     $msg
 }
 
+# ---- status line: conta e uso da sessao (statusline.ps1) ----
+
+function Get-ContaAtual {
+    $cs = (Get-Contas).Contas
+    if (-not $env:CLAUDE_CONFIG_DIR) { return $cs | Where-Object Mestre | Select-Object -First 1 }
+    $dir = [IO.Path]::GetFullPath($env:CLAUDE_CONFIG_DIR).TrimEnd('\')
+    $cs | Where-Object { $_.Pasta.TrimEnd('\') -ieq $dir } | Select-Object -First 1
+}
+
+function Format-StatusLine($entrada, $conta, [int]$aviso) {
+    $e = [char]27
+    $pct = {
+        param($v)
+        if ($null -eq $v) { return '?' }
+        $n = [int][math]::Round([double]$v)
+        $cor = if ($n -ge 95) { '31' } elseif ($n -ge $aviso) { '33' } else { $null }
+        if ($cor) { "$e[${cor}m$n%$e[0m" } else { "$n%" }
+    }
+    $partes = @()
+    if ($conta) { $partes += $conta.Nome }
+    $rl = $entrada.rate_limits
+    if ($rl -and ($rl.five_hour -or $rl.seven_day)) {
+        $partes += '5h {0} / sem {1}' -f (& $pct $rl.five_hour.used_percentage), (& $pct $rl.seven_day.used_percentage)
+    }
+    $partes -join ' | '
+}
+
+$Script:MarcaStatusLine = 'statusline.ps1'
+
+function Register-StatusLine {
+    $s = Get-SettingsMestre
+    if ($s.Texto -match '"statusLine"\s*:') {
+        if ($s.Texto -match [regex]::Escape($MarcaStatusLine)) { return $null }
+        return 'settings.json ja tem outra statusLine: nao mexi (a de conta e uso fica sem registrar)'
+    }
+    $cmd = 'powershell -NoProfile -ExecutionPolicy Bypass -File \"{0}/{1}\"' -f ($Base -replace '\\', '/'), $MarcaStatusLine
+    $novo = Add-NoInicioJson $s.Texto ('"statusLine": {{"type": "command", "command": "{0}"}}' -f $cmd)
+    $null = $novo | ConvertFrom-Json
+    Write-TextoSemBom $s.Arquivo $novo
+    'settings.json: statusLine registrada (conta e uso da sessao)'
+}
+
+function Unregister-StatusLine {
+    $s = Get-SettingsMestre
+    $obj = '"statusLine"\s*:\s*\{[^{}]*' + [regex]::Escape($MarcaStatusLine) + '[^{}]*\}'
+    if ($s.Texto -notmatch $obj) { return }
+    $novo = [regex]::Replace($s.Texto, $obj + '\s*,\s*', '')
+    if ($novo -eq $s.Texto) { $novo = [regex]::Replace($s.Texto, ',\s*' + $obj, '') }
+    if ($novo -eq $s.Texto) { $novo = [regex]::Replace($s.Texto, $obj, '') }
+    $null = $novo | ConvertFrom-Json
+    Write-TextoSemBom $s.Arquivo $novo
+}
+
 # Atualiza o bloco entre as marcas no ~/.claude/CLAUDE.md a partir de modelo-CLAUDE.md.
 function Update-ClaudeMd {
     $cfg = Get-Contas

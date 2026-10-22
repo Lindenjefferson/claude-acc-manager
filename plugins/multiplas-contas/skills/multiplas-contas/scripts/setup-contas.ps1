@@ -20,6 +20,9 @@ foreach ($c in $cfg.Contas) {
     if ($msgs) { $msgs | ForEach-Object { Write-Host "[$($c.Nome)] $_" } } else { Write-Host "[$($c.Nome)] ok, ja estava configurada" }
 }
 
+# RC desligado para sessoes abertas sem o cc; status line com conta e uso.
+foreach ($m in @((Set-RcDesligadoCompartilhado), (Register-StatusLine))) { if ($m) { Write-Host $m } }
+
 $bin = Join-Path $Base 'bin'
 $path = [Environment]::GetEnvironmentVariable('Path', 'User')
 if (-not (($path -split ';') -contains $bin)) {

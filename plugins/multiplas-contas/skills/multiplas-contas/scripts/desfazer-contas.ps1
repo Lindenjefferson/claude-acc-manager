@@ -1,5 +1,6 @@
 # Desfaz a instalacao sem tocar no conteudo da pasta mestre ~/.claude: remove so os links das
-# contas extras, tira bin\ do PATH, remove o atalho do Explorer e o bloco de contas do CLAUDE.md.
+# contas extras, tira bin\ do PATH, remove o atalho do Explorer, o bloco de contas do CLAUDE.md
+# e a statusLine de conta e uso do settings.json.
 # Com -ApagarPastas, apaga tambem as pastas das contas extras (logins delas; exige /login de novo).
 param([switch]$ApagarPastas)
 . (Join-Path $PSScriptRoot 'comum.ps1')
@@ -26,6 +27,10 @@ if (Test-Path $chave) { Remove-Item $chave -Force; Write-Host "Explorer: atalho 
 
 Remove-BlocoClaudeMd
 Write-Host 'CLAUDE.md: bloco de contas removido'
+
+# A statusLine sai so se for a nossa; remoteControlAtStartup false fica (seguro sem o cc).
+Unregister-StatusLine
+Write-Host 'settings.json: statusLine de conta e uso removida (se era a nossa)'
 
 $cc = Join-Path $Base 'cc.ps1'
 if (Test-Path $cc) { Rename-Item $cc 'cc.ps1.desativado' -Force; Write-Host 'cc desativado (cc.ps1.desativado); instalar.ps1 reativa' }
