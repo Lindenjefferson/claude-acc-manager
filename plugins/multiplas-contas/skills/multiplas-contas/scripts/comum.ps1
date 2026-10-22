@@ -40,8 +40,12 @@ function Get-Contas {
             Email  = $p.Value.email
             Pasta  = $pasta
             Mestre = ($pasta.TrimEnd('\') -eq $Mestre.TrimEnd('\'))
+            # Remote Control ao abrir com cc: so liga com "rc": true explicito.
+            Rc     = ($p.Value.rc -is [bool] -and $p.Value.rc)
         }
     }
+    $aviso = 80
+    if ($cfg.avisoUso -is [int] -and $cfg.avisoUso -ge 1 -and $cfg.avisoUso -le 100) { $aviso = $cfg.avisoUso }
     # "principal" e a conta padrao do cc e onde se publica; "padrao"/"publicar" separam os dois papeis.
     [pscustomobject]@{
         Principal = $principal
@@ -50,6 +54,8 @@ function Get-Contas {
         Atalho   = $(if ($cfg.atalhoExplorer) { $cfg.atalhoExplorer } else { 'cc' })
         # Conta em que a extensao Claude in Chrome esta logada (informada pelo usuario; nao da para detectar).
         Chrome   = $cfg.chrome
+        # Porcentagem (5h ou semanal) a partir da qual o cc avisa e a status line fica amarela.
+        AvisoUso = $aviso
         Contas   = @($lista)
     }
 }

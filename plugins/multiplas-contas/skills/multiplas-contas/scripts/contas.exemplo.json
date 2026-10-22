@@ -2,8 +2,9 @@
   "principal": "principal",
   "atalhoExplorer": "cc",
   "chrome": "principal",
+  "avisoUso": 80,
   "contas": {
-    "principal":   { "email": "voce@exemplo.com", "pasta": "~/.claude" },
+    "principal":   { "email": "voce@exemplo.com", "pasta": "~/.claude", "rc": true },
     "secundaria1": { "email": "outra@exemplo.com" },
     "secundaria2": { "email": "mais-uma@exemplo.com" }
   }
