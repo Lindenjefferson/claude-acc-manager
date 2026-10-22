@@ -1,9 +1,9 @@
 # Contas do Claude Code neste PC
 
-Uso várias contas do Claude Code só para ter mais cota de tokens. O trabalho neste PC é todo pessoal, em qualquer conta.
+Este PC tem uma conta principal do Claude Code e contas secundárias, todas com o mesmo ambiente. Só o login muda de uma para outra.
 
-| Conta | E-mail | Pasta de config |
-|---|---|---|
+| Conta | Papel | E-mail | Pasta de config |
+|---|---|---|---|
 {{TABELA}}
 
 - Abro cada conta com `cc <conta>`, no terminal ou na barra de endereço do Explorer (`{{ATALHO}}` / `{{ATALHO}} <conta>`). Scripts e `contas.json` ficam em `~/.claude-contas`.
@@ -16,7 +16,7 @@ Uso várias contas do Claude Code só para ter mais cota de tokens. O trabalho n
 - Claude in Chrome funciona em qualquer conta (usa os logins do próprio Chrome).
 
 ## Proibições
-- **Só publicar artefatos** (Artifact, Claude Docs ou qualquer publicação no claude.ai) **na conta {{PUBLICAR}} ({{EMAIL_PUBLICAR}}).** Nunca nas outras.
+- **Só publicar artefatos** (Artifact, Claude Docs ou qualquer publicação no claude.ai) **na conta principal, {{PUBLICAR}} ({{EMAIL_PUBLICAR}}).** Nunca nas secundárias.
   - Antes de publicar, confira a conta. Se não for a {{PUBLICAR}}, grave o conteúdo num arquivo e procure com ListAgents uma sessão cujo nome termine em "({{PUBLICAR}})". Se não houver, abra uma com `powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude-contas/abrir-conta.ps1 {{PUBLICAR}} <pasta>`. Depois peça por SendMessage que ela publique; o usuário aprova na janela dela.
   - A publicação usa a conta logada no Claude Code, não o login do Chrome.
 - **Não copiar nem mover `.credentials.json`** entre pastas de conta. Cada conta faz `/login` na própria pasta.

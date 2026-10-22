@@ -2,7 +2,7 @@
 
 Plugin privado do Claude Code com a skill `multiplas-contas`. No Windows, ela permite:
 
-- alternar entre várias contas com `cc <conta>` sem relogar. Cada conta tem só o login separado; settings, histórico, memória, skills e plugins são compartilhados;
+- ter uma conta principal e quantas secundárias quiser, e alternar entre elas com `cc <conta>` sem relogar. Cada conta tem só o login separado; settings, histórico, memória, skills e plugins são compartilhados. Só a principal publica artefatos;
 - abrir o Claude na pasta atual digitando `cc` (ou `cc <conta>`) na barra de endereço do Explorer.
 
 ## Instalar num PC novo

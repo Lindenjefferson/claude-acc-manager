@@ -37,9 +37,12 @@ function Get-Contas {
             Mestre = ($pasta.TrimEnd('\') -eq $Mestre.TrimEnd('\'))
         }
     }
+    # "principal" e a conta padrao do cc e a unica que publica; "padrao"/"publicar" separam os dois papeis.
+    $principal = if ($cfg.principal) { $cfg.principal } else { $cfg.padrao }
     [pscustomobject]@{
-        Padrao   = $cfg.padrao
-        Publicar = $cfg.publicar
+        Principal = $principal
+        Padrao   = $(if ($cfg.padrao) { $cfg.padrao } else { $principal })
+        Publicar = $(if ($cfg.publicar) { $cfg.publicar } else { $principal })
         Atalho   = $(if ($cfg.atalhoExplorer) { $cfg.atalhoExplorer } else { 'cc' })
         Contas   = @($lista)
     }
@@ -169,11 +172,10 @@ function Update-ClaudeMd {
     $cfg = Get-Contas
     $modelo = Get-Content (Join-Path $Base 'modelo-CLAUDE.md') -Raw -Encoding UTF8
     $linhas = foreach ($c in $cfg.Contas) {
-        $papel = @()
-        if ($c.Nome -eq $cfg.Padrao) { $papel += 'padrao' }
-        if ($c.Nome -eq $cfg.Publicar) { $papel += 'publica' }
+        $papel = if ($c.Nome -eq $cfg.Publicar) { 'principal' } else { 'secundaria' }
+        if ($c.Nome -eq $cfg.Padrao -and $cfg.Padrao -ne $cfg.Publicar) { $papel += ', padrao do cc' }
         $p = if ($c.Mestre) { '`~/.claude` (pasta mestre)' } else { '`~/.claude-contas/' + $c.Nome + '`' }
-        '| {0}{1} | {2} | {3} |' -f $c.Nome, $(if ($papel) { ' (' + ($papel -join ', ') + ')' }), $c.Email, $p
+        '| {0} | {1} | {2} | {3} |' -f $c.Nome, $papel, $c.Email, $p
     }
     $pub = $cfg.Contas | Where-Object Nome -eq $cfg.Publicar
     $bloco = $modelo.Replace('{{TABELA}}', ($linhas -join "`n")).
