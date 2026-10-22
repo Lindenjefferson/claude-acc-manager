@@ -1,0 +1,14 @@
+{
+  "name": "linden-privado",
+  "owner": {
+    "name": "Lindenjefferson"
+  },
+  "plugins": [
+    {
+      "name": "multiplas-contas",
+      "source": "./plugins/multiplas-contas",
+      "description": "Várias contas do Claude Code no Windows com `cc <conta>` e atalho no Explorer."
+    }
+  ],
+  "description": "Plugins pessoais privados."
+}

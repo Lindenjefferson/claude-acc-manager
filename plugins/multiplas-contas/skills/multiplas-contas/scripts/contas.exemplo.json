@@ -1,0 +1,10 @@
+{
+  "padrao": "pessoal",
+  "publicar": "pessoal",
+  "atalhoExplorer": "cc",
+  "contas": {
+    "pessoal": { "email": "voce@exemplo.com" },
+    "trabalho1": { "email": "voce@empresa.com", "pasta": "~/.claude" },
+    "trabalho2": { "email": "voce2@empresa.com" }
+  }
+}

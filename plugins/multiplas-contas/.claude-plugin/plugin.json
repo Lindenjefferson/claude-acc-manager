@@ -1,0 +1,8 @@
+{
+  "name": "multiplas-contas",
+  "version": "1.0.0",
+  "description": "Várias contas do Claude Code no Windows alternadas com `cc <conta>` sem relogar (CLAUDE_CONFIG_DIR por conta, resto compartilhado), mais o atalho \"cc\" na barra de endereço do Explorer.",
+  "author": {
+    "name": "Lindenjefferson"
+  }
+}
