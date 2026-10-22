@@ -268,6 +268,66 @@ function Select-ContaSugerida([hashtable]$usos, [string]$excluir) {
     ($c | Sort-Object Max | Select-Object -First 1).Nome
 }
 
+# ---- Remote Control por conta ----
+# O settings.json e compartilhado entre as contas; o cc decide o RC de cada sessao passando
+# --settings com um arquivo de rc\ (linha de comando vence o settings.json do usuario).
+
+function Split-ArgsRc($conta, [object[]]$argumentos) {
+    $ligado = [bool]$conta.Rc
+    $resto = @()
+    foreach ($a in @($argumentos)) {
+        if ($a -eq '--no-rc') { $ligado = $false; continue }
+        # --rc [nome] fica nos argumentos: o proprio claude aceita e usa o nome.
+        if ($a -in '--rc', '--remote-control') { $ligado = $true }
+        $resto += $a
+    }
+    [pscustomobject]@{
+        Ligado            = $ligado
+        Resto             = $resto
+        SettingsDoUsuario = [bool]($resto | Where-Object { "$_" -eq '--settings' -or "$_".StartsWith('--settings=') })
+    }
+}
+
+function Get-ArquivoRc([bool]$ligado) {
+    $f = Join-Path $Base ('rc\{0}.json' -f $(if ($ligado) { 'ligado' } else { 'desligado' }))
+    if (-not (Test-Path -LiteralPath $f)) {
+        New-Item -ItemType Directory -Force (Split-Path $f) | Out-Null
+        Write-TextoSemBom $f ('{{ "remoteControlAtStartup": {0} }}' -f "$ligado".ToLower())
+    }
+    $f
+}
+
+# Insere um par "chave": valor logo depois do primeiro "{" de um JSON, sem reformatar o resto.
+function Add-NoInicioJson([string]$texto, [string]$par) {
+    if ($texto -match '^\s*\{\s*\}\s*$') { return "{`n  $par`n}`n" }
+    $i = $texto.IndexOf('{')
+    if ($i -lt 0) { throw 'settings.json sem objeto JSON' }
+    $texto.Substring(0, $i + 1) + "`n  $par," + $texto.Substring($i + 1)
+}
+
+function Get-SettingsMestre {
+    $f = Join-Path $Mestre 'settings.json'
+    $t = if (Test-Path -LiteralPath $f) { Get-Content -LiteralPath $f -Raw -Encoding UTF8 } else { '{}' }
+    [pscustomobject]@{ Arquivo = $f; Texto = $t }
+}
+
+# Sessoes abertas sem o cc (claude direto, IDE, app) nunca ligam o RC sozinhas.
+function Set-RcDesligadoCompartilhado {
+    $s = Get-SettingsMestre
+    $chave = '"remoteControlAtStartup"\s*:\s*'
+    if ($s.Texto -match ($chave + 'false')) { return $null }
+    if ($s.Texto -match ($chave + 'true')) {
+        $novo = $s.Texto -replace ($chave + 'true'), '"remoteControlAtStartup": false'
+        $msg = "settings.json: remoteControlAtStartup estava true; agora false (o cc liga o RC so nas contas com rc ou com --rc)"
+    } else {
+        $novo = Add-NoInicioJson $s.Texto '"remoteControlAtStartup": false'
+        $msg = 'settings.json: remoteControlAtStartup false gravado (RC so liga pelo cc)'
+    }
+    $null = $novo | ConvertFrom-Json  # nao grava JSON quebrado
+    Write-TextoSemBom $s.Arquivo $novo
+    $msg
+}
+
 # Atualiza o bloco entre as marcas no ~/.claude/CLAUDE.md a partir de modelo-CLAUDE.md.
 function Update-ClaudeMd {
     $cfg = Get-Contas
