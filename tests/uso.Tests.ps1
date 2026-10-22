@@ -86,16 +86,17 @@ Describe 'Get-UsoConta' {
 }
 
 Describe 'Format-Uso, Get-MaxUso, Select-ContaSugerida' {
+    $esperado = 'Sess' + [char]0xE3 + 'o (5h): 2% ' + [char]0xB7 + ' Semana: 27%'
     It 'format e max' {
         $u = ConvertTo-Uso (New-Util 2 27 $agora.AddHours(1)) 'agora' $null $agora
-        Format-Uso $u | Should Be '5h 2% / sem 27%'
+        Format-Uso $u | Should Be $esperado
         Get-MaxUso $u | Should Be 27
     }
 
     It 'format do salvo traz o horario' {
         $q = $agora.AddMinutes(-30)
         $u = ConvertTo-Uso (New-Util 2 27 $agora.AddHours(1)) 'salvo' $q $agora
-        Format-Uso $u | Should Be ('5h 2% / sem 27% (salvo {0})' -f $q.ToString('HH:mm'))
+        Format-Uso $u | Should Be ($esperado + (' (salvo {0})' -f $q.ToString('HH:mm')))
     }
 
     It 'sugere a de menor maximo' {

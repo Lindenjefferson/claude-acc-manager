@@ -7,6 +7,8 @@ $contas = (Get-Contas).Contas
 $b = $contas | Where-Object Nome -eq 'b'
 $settings = Join-Path $raiz '.claude\settings.json'
 $esc = [char]27
+$ponto = [char]0xB7
+function Texto([string]$conta, $c, $s) { $u = 'Sess' + [char]0xE3 + ('o (5h): {0}% {1} Semana: {2}%' -f $c, $ponto, $s); if ($conta) { "$conta $ponto $u" } else { $u } }
 function Remove-Ansi([string]$t) { $t -replace "$esc\[[0-9;]*m", '' }
 function New-Entrada($cinco, $semana) {
     [pscustomobject]@{ rate_limits = [pscustomobject]@{
@@ -23,8 +25,8 @@ Describe 'Format-StatusLine' {
     }
 
     It 'texto' {
-        Remove-Ansi (Format-StatusLine (New-Entrada 12 27) $b 80) | Should Be 'b | 5h 12% / sem 27%'
-        Remove-Ansi (Format-StatusLine (New-Entrada 12.6 27) $b 80) | Should Be 'b | 5h 13% / sem 27%'
+        Remove-Ansi (Format-StatusLine (New-Entrada 12 27) $b 80) | Should Be (Texto 'b' 12 27)
+        Remove-Ansi (Format-StatusLine (New-Entrada 12.6 27) $b 80) | Should Be (Texto 'b' 13 27)
     }
 
     It 'sem rate_limits' {
@@ -32,7 +34,7 @@ Describe 'Format-StatusLine' {
     }
 
     It 'sem conta' {
-        Remove-Ansi (Format-StatusLine (New-Entrada 12 27) $null 80) | Should Be '5h 12% / sem 27%'
+        Remove-Ansi (Format-StatusLine (New-Entrada 12 27) $null 80) | Should Be (Texto $null 12 27)
     }
 }
 
@@ -50,10 +52,13 @@ Describe 'statusline.ps1' {
         $script = Join-Path $ScriptsDir 'statusline.ps1'
         $env:USERPROFILE = $raiz
         $env:CLAUDE_CONFIG_DIR = $b.Pasta
+        $antes = [Console]::OutputEncoding
+        [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
         $out = '{"rate_limits":{"five_hour":{"used_percentage":85},"seven_day":{"used_percentage":10}}}' |
             powershell -NoProfile -ExecutionPolicy Bypass -File $script
+        [Console]::OutputEncoding = $antes
         Remove-Item Env:CLAUDE_CONFIG_DIR
-        Remove-Ansi ($out -join '') | Should Be 'b | 5h 85% / sem 10%'
+        Remove-Ansi ($out -join '') | Should Be (Texto 'b' 85 10)
     }
 
     It 'entrada invalida nao quebra' {

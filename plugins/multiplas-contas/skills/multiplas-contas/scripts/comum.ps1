@@ -252,10 +252,16 @@ function Get-MaxUso($uso) {
     ($v | Measure-Object -Maximum).Maximum
 }
 
+# "Sessao (5h): x% . Semana: y%" (com acento e ponto medio), a partir dos textos ja prontos de cada janela.
+$Script:Ponto = [char]0xB7
+function Format-Janelas([string]$cinco, [string]$semana) {
+    'Sess{0}o (5h): {1} {2} Semana: {3}' -f [char]0xE3, $cinco, $Ponto, $semana
+}
+
 function Format-Uso($uso) {
     if ($null -eq (Get-MaxUso $uso)) { return '-' }
     $p = { param($x) if ($null -eq $x) { '?' } else { "$x%" } }
-    $t = '5h {0} / sem {1}' -f (& $p $uso.Cinco), (& $p $uso.Semana)
+    $t = Format-Janelas (& $p $uso.Cinco) (& $p $uso.Semana)
     if ($uso.Fonte -eq 'salvo' -and $uso.Quando) { $t += ' (salvo {0})' -f $uso.Quando.ToString('HH:mm') }
     $t
 }
@@ -357,9 +363,9 @@ function Format-StatusLine($entrada, $conta, [int]$aviso) {
     if ($conta) { $partes += $conta.Nome }
     $rl = $entrada.rate_limits
     if ($rl -and ($rl.five_hour -or $rl.seven_day)) {
-        $partes += '5h {0} / sem {1}' -f (& $pct $rl.five_hour.used_percentage), (& $pct $rl.seven_day.used_percentage)
+        $partes += Format-Janelas (& $pct $rl.five_hour.used_percentage) (& $pct $rl.seven_day.used_percentage)
     }
-    $partes -join ' | '
+    $partes -join " $Ponto "
 }
 
 $Script:MarcaStatusLine = 'statusline.ps1'
