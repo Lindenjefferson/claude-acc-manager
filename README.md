@@ -11,9 +11,11 @@ Plugin privado do Claude Code com a skill `multiplas-contas`. No Windows, ela pe
 
 O `gh` precisa estar logado na conta que tem acesso a este repositório, porque ele é privado.
 
+O plugin é listado no marketplace `linden-plugins`, que mora no repositório [`claude-pipeline`](https://github.com/Lindenjefferson/claude-pipeline):
+
 ```
-/plugin marketplace add Lindenjefferson/claude-multiplas-contas
-/plugin install multiplas-contas@linden-privado
+/plugin marketplace add Lindenjefferson/claude-pipeline
+/plugin install multiplas-contas@linden-plugins
 ```
 
 Depois, numa sessão do Claude Code: **"instala a skill multiplas-contas"**. Ela verifica o PC, pergunta as contas, instala e diz o que falta (um `/login` por conta).
