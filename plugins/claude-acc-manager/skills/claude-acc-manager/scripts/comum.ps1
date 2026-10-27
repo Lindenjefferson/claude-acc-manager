@@ -25,7 +25,7 @@ $Script:ChavesSemente = @('mcpServers', 'projects', 'githubRepoPaths', 'hasCompl
 
 $Script:MarcaInicio = '<!-- claude-acc-manager:inicio -->'
 $Script:MarcaFim    = '<!-- claude-acc-manager:fim -->'
-# Acha o bloco tambem com as marcas de antes da 2.0.1, quando o plugin se chamava multiplas-contas.
+# Acha o bloco tambem com as marcas da 1.4.0 e anteriores, quando o plugin se chamava multiplas-contas.
 $Script:RegexBloco  = '(?s)<!-- (?:claude-acc-manager|multiplas-contas):inicio -->.*?<!-- (?:claude-acc-manager|multiplas-contas):fim -->'
 
 function Get-Contas {
