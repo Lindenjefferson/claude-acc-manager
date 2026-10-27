@@ -288,10 +288,10 @@ function Get-MaxUso($uso) {
     ($v | Measure-Object -Maximum).Maximum
 }
 
-# "Sessao (5h): x% . Semana: y%" (com acento e ponto medio), a partir dos textos ja prontos de cada janela.
+# "Sessao: x% . Semana: y%" (com acento e ponto medio), a partir dos textos ja prontos de cada janela.
 $Script:Ponto = [char]0xB7
 function Format-Janelas([string]$cinco, [string]$semana) {
-    'Sess{0}o (5h): {1} {2} Semana: {3}' -f [char]0xE3, $cinco, $Ponto, $semana
+    'Sess{0}o: {1} {2} Semana: {3}' -f [char]0xE3, $cinco, $Ponto, $semana
 }
 
 # " (reinicia em 2h05)" ate o reset da janela; vazio sem reset conhecido ou ja passado.

@@ -1,4 +1,4 @@
-# Status line do Claude Code: "<conta> . Sessao (5h): x% (reinicia em 2h05) . Semana: y% (reinicia em 3d 4h)",
+# Status line do Claude Code: "<conta> . Sessao: x% (reinicia em 2h05) . Semana: y% (reinicia em 3d 4h)",
 # com a porcentagem em amarelo a partir de avisoUso e vermelho a partir de 95%. O Claude Code manda o JSON da sessao pela entrada padrao e le a saida
 # em UTF-8 (por isso a troca de encoding: o padrao do PowerShell 5.1 e o codepage OEM).
 # Em qualquer falha, escreve uma linha vazia.
