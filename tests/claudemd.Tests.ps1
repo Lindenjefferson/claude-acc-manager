@@ -20,9 +20,20 @@ Describe 'Bloco do CLAUDE.md' {
         $t = Get-Content $md -Raw
         $t | Should Not Match 'multiplas-contas:'
         $t | Should Not Match 'velho'
-        ([regex]::Matches($t, '<!-- claude-acc-manager:inicio -->')).Count | Should Be 1
+        ([regex]::Matches($t, '<!-- gerenciador-contas:inicio -->')).Count | Should Be 1
         $t | Should Match '# Meu'
         $t | Should Match 'fim do usuario'
+    }
+
+    It 'troca o bloco com as marcas claude-acc-manager pelo novo, sem duplicar' {
+        $raiz = Join-Path $TestDrive 'm3'
+        . New-AmbienteFalso $raiz @{ principal = 'a'; contas = @{ a = @{ email = 'a@x' } } }
+        $md = Set-ClaudeMdFalso $raiz ($antigo -replace 'multiplas-contas', 'claude-acc-manager')
+        Update-ClaudeMd
+        $t = Get-Content $md -Raw
+        $t | Should Not Match 'claude-acc-manager:'
+        $t | Should Not Match 'velho'
+        ([regex]::Matches($t, '<!-- gerenciador-contas:inicio -->')).Count | Should Be 1
     }
 
     It 'remove o bloco com as marcas antigas' {

@@ -27,4 +27,4 @@ Este PC tem uma conta principal do Claude Code e contas secundárias, todas com 
 - **Não copiar nem mover `.credentials.json`** entre pastas de conta. Cada conta faz `/login` na própria pasta.
 - **Não apagar as pastas `~/.claude-contas/<conta>` com `Remove-Item -Recurse`**: em junctions isso apaga o conteúdo real em `~/.claude`. Para desfazer, use `~/.claude-contas/desfazer-contas.ps1`.
 - **Não definir `CLAUDE_CONFIG_DIR` apontando para `~/.claude`**: a conta da pasta mestre roda sem a variável, senão o Claude procura o `.claude.json` no lugar errado.
-- Para adicionar, remover ou reinstalar contas, use a skill `claude-acc-manager`.
+- Para adicionar, remover ou reinstalar contas, use a skill `gerenciador-contas`.
