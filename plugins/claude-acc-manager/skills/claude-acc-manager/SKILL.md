@@ -1,5 +1,5 @@
 ---
-name: multiplas-contas
+name: claude-acc-manager
 description: Instala e mantém várias contas do Claude Code no Windows (uma principal e quantas secundárias quiser), alternadas com `cc <conta>` sem relogar (CLAUDE_CONFIG_DIR por conta, resto compartilhado com ~/.claude), mais o atalho "cc" na barra de endereço do Explorer. Use para instalar num PC novo, adicionar/remover conta secundária, trocar a conta principal, reinstalar depois de atualizar o plugin, desfazer, diagnosticar o `cc`, ou abrir uma sessão de outra conta (ex.: a principal, para publicar um artefato).
 ---
 
