@@ -23,8 +23,10 @@ $Script:ChavesSemente = @('mcpServers', 'projects', 'githubRepoPaths', 'hasCompl
                           'claudeInChromeDefaultEnabled', 'hasCompletedClaudeInChromeOnboarding',
                           'cachedChromeExtensionInstalled')
 
-$Script:MarcaInicio = '<!-- multiplas-contas:inicio -->'
-$Script:MarcaFim    = '<!-- multiplas-contas:fim -->'
+$Script:MarcaInicio = '<!-- acc-manager:inicio -->'
+$Script:MarcaFim    = '<!-- acc-manager:fim -->'
+# Acha o bloco tambem com as marcas de antes da 2.0.0, quando o plugin se chamava multiplas-contas.
+$Script:RegexBloco  = '(?s)<!-- (?:acc-manager|multiplas-contas):inicio -->.*?<!-- (?:acc-manager|multiplas-contas):fim -->'
 
 function Get-Contas {
     $cfg = Get-Content (Join-Path $Base 'contas.json') -Raw -Encoding UTF8 | ConvertFrom-Json
@@ -480,9 +482,9 @@ function Update-ClaudeMd {
 
     $md = Join-Path $Mestre 'CLAUDE.md'
     $atual = if (Test-Path $md) { Get-Content $md -Raw -Encoding UTF8 } else { '' }
-    $i = $atual.IndexOf($MarcaInicio); $f = $atual.IndexOf($MarcaFim)
-    if ($i -ge 0 -and $f -gt $i) {
-        $novo = $atual.Substring(0, $i) + $bloco + $atual.Substring($f + $MarcaFim.Length)
+    $m = [regex]::Match($atual, $RegexBloco)
+    if ($m.Success) {
+        $novo = $atual.Substring(0, $m.Index) + $bloco + $atual.Substring($m.Index + $m.Length)
     } elseif ($atual.Trim()) {
         $novo = $atual.TrimEnd() + "`n`n" + $bloco + "`n"
     } else {
@@ -495,9 +497,9 @@ function Remove-BlocoClaudeMd {
     $md = Join-Path $Mestre 'CLAUDE.md'
     if (-not (Test-Path $md)) { return }
     $atual = Get-Content $md -Raw -Encoding UTF8
-    $i = $atual.IndexOf($MarcaInicio); $f = $atual.IndexOf($MarcaFim)
-    if ($i -lt 0 -or $f -lt $i) { return }
-    $novo = ($atual.Substring(0, $i) + $atual.Substring($f + $MarcaFim.Length)).Trim()
+    $m = [regex]::Match($atual, $RegexBloco)
+    if (-not $m.Success) { return }
+    $novo = ($atual.Substring(0, $m.Index) + $atual.Substring($m.Index + $m.Length)).Trim()
     if ($novo) { Write-TextoSemBom $md ($novo + "`n") } else { Remove-Item $md }
 }
 

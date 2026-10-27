@@ -40,8 +40,8 @@
 ### Tarefa 1: campos `rc` e `avisoUso` no `contas.json`
 
 **Arquivos:**
-- Modificar: `plugins/multiplas-contas/skills/multiplas-contas/scripts/comum.ps1` (`Get-Contas`)
-- Modificar: `plugins/multiplas-contas/skills/multiplas-contas/scripts/contas.exemplo.json` (`"avisoUso": 80` e `"rc": true` na principal)
+- Modificar: `plugins/acc-manager/skills/acc-manager/scripts/comum.ps1` (`Get-Contas`)
+- Modificar: `plugins/acc-manager/skills/acc-manager/scripts/contas.exemplo.json` (`"avisoUso": 80` e `"rc": true` na principal)
 - Criar: `tests/_contas-falsas.ps1` (helper) e `tests/contas.Tests.ps1`
 
 **Interfaces:**
@@ -92,7 +92,7 @@
 - [ ] **Passo 2:** rode os testes. Esperado: FALHA.
 - [ ] **Passo 3:** implemente as funções. Em `Invoke-UsoApi`, defina `[Net.ServicePointManager]::SecurityProtocol` com TLS 1.2 antes da chamada.
 - [ ] **Passo 4:** rode os testes. Esperado: PASSA.
-- [ ] **Passo 5:** faça uma checagem real, sem imprimir o token: `powershell -NoProfile -Command ". ./plugins/multiplas-contas/skills/multiplas-contas/scripts/comum.ps1; (Get-Contas).Contas | % { '{0}: {1}' -f $_.Nome, (Format-Uso (Get-UsoConta $_)) }"`. Esperado: uma linha por conta, sem erro. As contas não logadas mostram `-`.
+- [ ] **Passo 5:** faça uma checagem real, sem imprimir o token: `powershell -NoProfile -Command ". ./plugins/acc-manager/skills/acc-manager/scripts/comum.ps1; (Get-Contas).Contas | % { '{0}: {1}' -f $_.Nome, (Format-Uso (Get-UsoConta $_)) }"`. Esperado: uma linha por conta, sem erro. As contas não logadas mostram `-`.
 - [ ] **Passo 6:** commit, com a mensagem `Uso por conta (API ou valor salvo)`.
 
 ### Tarefa 3: decisão do RC e `settings.json` compartilhado
@@ -154,7 +154,7 @@
 - [ ] **Passo 2:** rode os testes. Esperado: FALHA.
 - [ ] **Passo 3:** implemente `Get-ArgsClaude` e as mudanças no `cc.ps1`.
 - [ ] **Passo 4:** rode os testes. Esperado: PASSA.
-- [ ] **Passo 5:** verifique a lista. Rode `powershell -NoProfile -ExecutionPolicy Bypass -File plugins/multiplas-contas/skills/multiplas-contas/scripts/cc.ps1 -l` (ela lê o `~/.claude-contas/contas.json` real). Esperado: as colunas RC e Uso aparecem. edevize2 mostra o uso; edevize1 e edevize3 mostram `-`.
+- [ ] **Passo 5:** verifique a lista. Rode `powershell -NoProfile -ExecutionPolicy Bypass -File plugins/acc-manager/skills/acc-manager/scripts/cc.ps1 -l` (ela lê o `~/.claude-contas/contas.json` real). Esperado: as colunas RC e Uso aparecem. edevize2 mostra o uso; edevize1 e edevize3 mostram `-`.
 - [ ] **Passo 6:** commit, com a mensagem `cc: colunas RC e Uso, --rc/--no-rc e aviso de uso alto`.
 
 ### Tarefa 5: status line
@@ -196,7 +196,7 @@
 ### Tarefa 6: documentação, versão, instalação neste PC e verificação real
 
 **Arquivos:**
-- Modificar: `SKILL.md`, `README.md`, `modelo-CLAUDE.md`, `plugins/multiplas-contas/.claude-plugin/plugin.json` (1.3.0) e `.claude-plugin/marketplace.json`, se ele tiver versão
+- Modificar: `SKILL.md`, `README.md`, `modelo-CLAUDE.md`, `plugins/acc-manager/.claude-plugin/plugin.json` (1.3.0) e `.claude-plugin/marketplace.json`, se ele tiver versão
 - Fora do repositório: `~/.claude-contas/contas.json` (acrescentar `"rc": true` na `pessoal`, editando o texto e preservando o resto)
 
 - [ ] **Passo 1: documentação.**
@@ -208,7 +208,7 @@
   - **README:** listar `statusline.ps1`.
   - **`modelo-CLAUDE.md`:** uma linha dizendo que o RC liga por padrão só nas contas com `rc: true`.
 - [ ] **Passo 2:** rode todos os testes. Esperado: PASSA.
-- [ ] **Passo 3:** instale neste PC. Edite o `contas.json` real e rode `powershell -NoProfile -ExecutionPolicy Bypass -File plugins/multiplas-contas/skills/multiplas-contas/scripts/instalar.ps1`. Esperado:
+- [ ] **Passo 3:** instale neste PC. Edite o `contas.json` real e rode `powershell -NoProfile -ExecutionPolicy Bypass -File plugins/acc-manager/skills/acc-manager/scripts/instalar.ps1`. Esperado:
   - mensagens de RC desligado e de status line registrada;
   - `cc -l` com pessoal `ligado` e as outras contas `desligado`.
 - [ ] **Passo 4: verificação real do RC, junto com o usuário.** Abra janelas com `~/.claude-contas/abrir-conta.ps1` e peça ao usuário para conferir se aparece o indicador de Remote Control ativo:

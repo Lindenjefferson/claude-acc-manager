@@ -1,5 +1,5 @@
 ---
-name: multiplas-contas
+name: acc-manager
 description: Instala e mantém várias contas do Claude Code no Windows (uma principal e quantas secundárias quiser), alternadas com `cc <conta>` sem relogar (CLAUDE_CONFIG_DIR por conta, resto compartilhado com ~/.claude), mais o atalho "cc" na barra de endereço do Explorer. Use para instalar num PC novo, adicionar/remover conta secundária, trocar a conta principal, reinstalar depois de atualizar o plugin, desfazer, diagnosticar o `cc`, ou abrir uma sessão de outra conta (ex.: a principal, para publicar um artefato).
 ---
 
@@ -37,7 +37,7 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
    - Se o e-mail logado em `~/.claude` for o de uma secundária, é ela que recebe `"pasta": "~/.claude"`, e a principal ganha pasta própria (com um `/login`). Explique isso ao usuário.
    - Não copie `.credentials.json` de uma pasta para outra.
 4. Escreva `~/.claude-contas/contas.json` em UTF-8 sem BOM, no formato de `scripts/contas.exemplo.json`, com `"principal": "<nome>"`. Se o usuário quiser que o `cc` sem argumento abra outra conta, acrescente `"padrao": "<nome>"`; a principal continua sendo a única que publica.
-5. Rode `scripts/instalar.ps1`. Ele faz backup na primeira vez, copia os scripts, cria as pastas e os links, põe `~/.claude-contas/bin` no PATH, registra o atalho do Explorer e escreve o bloco de contas no `~/.claude/CLAUDE.md` (entre marcas `<!-- multiplas-contas:... -->`, preservando o resto do arquivo).
+5. Rode `scripts/instalar.ps1`. Ele faz backup na primeira vez, copia os scripts, cria as pastas e os links, põe `~/.claude-contas/bin` no PATH, registra o atalho do Explorer e escreve o bloco de contas no `~/.claude/CLAUDE.md` (entre marcas `<!-- acc-manager:... -->`, preservando o resto do arquivo).
 6. Passe ao usuário os próximos passos:
    - abrir um terminal **novo** (o PATH mudou);
    - rodar `cc <conta>` e `/login` uma vez em cada conta não logada;
@@ -49,6 +49,7 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
 - **Trocar a principal, o padrão, a conta do Chrome ou o atalho:** edite `contas.json` e rode `setup-contas.ps1`. Se mudou o atalho, rode `instalar.ps1`, que registra o novo; apague à mão a chave antiga em `HKCU\Software\Microsoft\Windows\CurrentVersion\App Paths\<antigo>.exe`.
 - **Remover uma conta:** primeiro tire os links da pasta dela com `. ~/.claude-contas/comum.ps1; Remove-LinksConta ((Get-Contas).Contas | ? Nome -eq '<conta>')`. Confira que não sobrou link na pasta (`Get-ChildItem -Force | ? LinkType`). Só então apague a pasta, tire a conta do `contas.json` e rode `setup-contas.ps1`.
 - **Depois de atualizar o plugin:** rode `scripts/instalar.ps1` de novo para copiar os scripts novos. Ele não refaz o backup nem toca no `contas.json`.
+- **Vindo do plugin `multiplas-contas` (até a 1.4.0):** desinstale o antigo (`claude plugin uninstall multiplas-contas@linden-plugins`), instale `acc-manager@linden-plugins` e rode `scripts/instalar.ps1`. O bloco do CLAUDE.md com as marcas antigas é trocado pelo novo.
 - **Desfazer:** `~/.claude-contas/desfazer-contas.ps1` remove links, PATH, atalho e o bloco do CLAUDE.md. Com `-ApagarPastas`, apaga também as pastas das contas extras.
 
 ## Publicar artefato em outra conta
