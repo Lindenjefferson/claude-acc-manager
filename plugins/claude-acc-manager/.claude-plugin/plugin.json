@@ -1,6 +1,6 @@
 {
   "name": "claude-acc-manager",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Uma conta principal e quantas secundárias quiser no Claude Code para Windows, alternadas com `cc <conta>` sem relogar (CLAUDE_CONFIG_DIR por conta, resto compartilhado), mais o atalho \"cc\" na barra de endereço do Explorer.",
   "author": {
     "name": "Lindenjefferson"
