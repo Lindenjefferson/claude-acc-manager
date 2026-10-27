@@ -8,7 +8,7 @@ $b = $contas | Where-Object Nome -eq 'b'
 $settings = Join-Path $raiz '.claude\settings.json'
 $esc = [char]27
 $ponto = [char]0xB7
-function Texto([string]$conta, $c, $s) { $u = 'Sess' + [char]0xE3 + ('o (5h): {0}% {1} Semana: {2}%' -f $c, $ponto, $s); if ($conta) { "$conta $ponto $u" } else { $u } }
+function Texto([string]$conta, $c, $s) { $u = 'Sess' + [char]0xE3 + ('o: {0}% {1} Semana: {2}%' -f $c, $ponto, $s); if ($conta) { "$conta $ponto $u" } else { $u } }
 function Remove-Ansi([string]$t) { $t -replace "$esc\[[0-9;]*m", '' }
 function New-Entrada($cinco, $semana) {
     [pscustomobject]@{ rate_limits = [pscustomobject]@{

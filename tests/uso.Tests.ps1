@@ -86,7 +86,7 @@ Describe 'Get-UsoConta' {
 }
 
 Describe 'Format-Uso, Get-MaxUso, Select-ContaSugerida' {
-    $esperado = 'Sess' + [char]0xE3 + 'o (5h): 2% (reinicia em 1h00) ' + [char]0xB7 + ' Semana: 27% (reinicia em 3d 0h)'
+    $esperado = 'Sess' + [char]0xE3 + 'o: 2% (reinicia em 1h00) ' + [char]0xB7 + ' Semana: 27% (reinicia em 3d 0h)'
     It 'format e max' {
         $u = ConvertTo-Uso (New-Util 2 27 $agora.AddHours(1)) 'agora' $null $agora
         Format-Uso $u $agora | Should Be $esperado
@@ -125,7 +125,7 @@ Describe 'Format-Uso, Get-MaxUso, Select-ContaSugerida' {
         Format-Reinicio $agora.AddMinutes(-1) $agora | Should Be ''
         Format-Reinicio $null $agora | Should Be ''
         $u = ConvertTo-Uso @{ five_hour = @{ utilization = 5; resets_at = $null } } 'agora' $null $agora
-        Format-Uso $u $agora | Should Be ('Sess' + [char]0xE3 + 'o (5h): 5% ' + [char]0xB7 + ' Semana: ?')
+        Format-Uso $u $agora | Should Be ('Sess' + [char]0xE3 + 'o: 5% ' + [char]0xB7 + ' Semana: ?')
     }
 
     It 'sugere a de menor maximo' {
