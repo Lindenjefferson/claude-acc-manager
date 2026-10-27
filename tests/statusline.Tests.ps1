@@ -33,6 +33,17 @@ Describe 'Format-StatusLine' {
         Format-StatusLine ([pscustomobject]@{ model = 'x' }) $b 80 | Should Be 'b'
     }
 
+    It 'tempo ate reiniciar (resets_at em segundos Unix)' {
+        $agora = Get-Date
+        $seg = { param($d) [DateTimeOffset]::new($d).ToUnixTimeSeconds() }
+        $ent = [pscustomobject]@{ rate_limits = [pscustomobject]@{
+            five_hour = [pscustomobject]@{ used_percentage = 85; resets_at = (& $seg $agora.AddMinutes(125)) }
+            seven_day = [pscustomobject]@{ used_percentage = 10; resets_at = (& $seg $agora.AddHours(76)) } } }
+        $t = Format-StatusLine $ent $b 80 $agora
+        $t | Should Match ([regex]::Escape("$esc[33m85%$esc[0m (reinicia em 2h0"))
+        Remove-Ansi $t | Should Match ([regex]::Escape("Semana: 10% (reinicia em 3d 3h)") + '|' + [regex]::Escape("Semana: 10% (reinicia em 3d 4h)"))
+    }
+
     It 'sem conta' {
         Remove-Ansi (Format-StatusLine (New-Entrada 12 27) $null 80) | Should Be (Texto $null 12 27)
     }

@@ -4,7 +4,7 @@ Plugin privado do Claude Code com a skill `multiplas-contas`. No Windows, ela pe
 
 - ter uma conta principal e quantas secundárias quiser, e alternar entre elas com `cc <conta>` sem relogar. Cada conta tem só o login separado; settings, histórico, memória, skills e plugins são compartilhados. Artefatos são publicados na principal, ou em outra conta indicada com confirmação;
 - abrir o Claude na pasta atual digitando `cc` (ou `cc <conta>`) na barra de endereço do Explorer;
-- ver o uso de cada conta (janela de 5h e semanal) no `cc -l` e na status line, com aviso de uso alto ao abrir;
+- ver o uso de cada conta (janela de 5h e semanal, com o tempo até reiniciar) no `cc -l` e na status line, com aviso de uso alto ao abrir;
 - escolher em quais contas o Remote Control liga por padrão (`"rc": true`), com `--rc` / `--no-rc` para mudar só naquela sessão.
 
 ## Instalar num PC novo

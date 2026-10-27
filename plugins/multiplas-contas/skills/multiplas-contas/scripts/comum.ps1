@@ -244,6 +244,8 @@ function Invoke-UsoApi([string]$token, [int]$timeoutSeg = 3) {
 function ConvertTo-DataLocal($v) {
     if (-not $v) { return $null }
     if ($v -is [datetime]) { return $v.ToLocalTime() }
+    # A status line recebe resets_at em segundos Unix; a API de uso, em texto ISO.
+    if ($v -is [ValueType]) { return [DateTimeOffset]::FromUnixTimeSeconds([int64]$v).LocalDateTime }
     try { return [DateTimeOffset]::Parse([string]$v, [Globalization.CultureInfo]::InvariantCulture).LocalDateTime } catch { return $null }
 }
 
@@ -292,14 +294,24 @@ function Format-Janelas([string]$cinco, [string]$semana) {
     'Sess{0}o (5h): {1} {2} Semana: {3}' -f [char]0xE3, $cinco, $Ponto, $semana
 }
 
-function Format-Uso($uso) {
+# " (reinicia em 2h05)" ate o reset da janela; vazio sem reset conhecido ou ja passado.
+function Format-Reinicio($reset, [datetime]$agora = (Get-Date)) {
+    if (-not $reset -or $reset -le $agora) { return '' }
+    $min = [int][math]::Floor(($reset - $agora).TotalMinutes)
+    $t = if ($min -lt 60) { '{0}min' -f $min }
+         elseif ($min -lt 1440) { '{0}h{1:00}' -f [math]::Floor($min / 60), ($min % 60) }
+         else { '{0}d {1}h' -f [math]::Floor($min / 1440), [math]::Floor(($min % 1440) / 60) }
+    " (reinicia em $t)"
+}
+
+function Format-Uso($uso, [datetime]$agora = (Get-Date)) {
     if ($null -eq (Get-MaxUso $uso)) { return '-' }
-    $p = { param($x) if ($null -eq $x) { '?' } else { "$x%" } }
-    $t = Format-Janelas (& $p $uso.Cinco) (& $p $uso.Semana)
+    $p = { param($x, $reset) if ($null -eq $x) { '?' } else { "$x%" + (Format-Reinicio $reset $agora) } }
+    $t = Format-Janelas (& $p $uso.Cinco $uso.ResetCinco) (& $p $uso.Semana $uso.ResetSemana)
     if ($uso.Fonte -eq 'salvo') {
         # Valor salvo em outro dia leva a data, para nao parecer de hoje.
         $t += if (-not $uso.Quando) { ' (salvo, sem data)' }
-              elseif ($uso.Quando.Date -eq (Get-Date).Date) { ' (salvo {0})' -f $uso.Quando.ToString('HH:mm') }
+              elseif ($uso.Quando.Date -eq $agora.Date) { ' (salvo {0})' -f $uso.Quando.ToString('HH:mm') }
               else { ' (salvo {0})' -f $uso.Quando.ToString('dd/MM HH:mm') }
     }
     $t
@@ -399,20 +411,22 @@ function Get-ContaAtual {
     $cs | Where-Object { $_.Pasta.TrimEnd('\') -ieq $dir } | Select-Object -First 1
 }
 
-function Format-StatusLine($entrada, $conta, [int]$aviso) {
+function Format-StatusLine($entrada, $conta, [int]$aviso, [datetime]$agora = (Get-Date)) {
     $e = [char]27
     $pct = {
-        param($v)
+        param($janela)
+        $v = $janela.used_percentage
         if ($null -eq $v) { return '?' }
         $n = [int][math]::Round([double]$v)
         $cor = if ($n -ge 95) { '31' } elseif ($n -ge $aviso) { '33' } else { $null }
-        if ($cor) { "$e[${cor}m$n%$e[0m" } else { "$n%" }
+        $t = if ($cor) { "$e[${cor}m$n%$e[0m" } else { "$n%" }
+        $t + (Format-Reinicio (ConvertTo-DataLocal $janela.resets_at) $agora)
     }
     $partes = @()
     if ($conta) { $partes += $conta.Nome }
     $rl = $entrada.rate_limits
     if ($rl -and ($rl.five_hour -or $rl.seven_day)) {
-        $partes += Format-Janelas (& $pct $rl.five_hour.used_percentage) (& $pct $rl.seven_day.used_percentage)
+        $partes += Format-Janelas (& $pct $rl.five_hour) (& $pct $rl.seven_day)
     }
     $partes -join " $Ponto "
 }
