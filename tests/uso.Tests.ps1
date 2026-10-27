@@ -86,23 +86,23 @@ Describe 'Get-UsoConta' {
 }
 
 Describe 'Format-Uso, Get-MaxUso, Select-ContaSugerida' {
-    $esperado = 'Sess' + [char]0xE3 + 'o (5h): 2% ' + [char]0xB7 + ' Semana: 27%'
+    $esperado = 'Sess' + [char]0xE3 + 'o (5h): 2% (reinicia em 1h00) ' + [char]0xB7 + ' Semana: 27% (reinicia em 3d 0h)'
     It 'format e max' {
         $u = ConvertTo-Uso (New-Util 2 27 $agora.AddHours(1)) 'agora' $null $agora
-        Format-Uso $u | Should Be $esperado
+        Format-Uso $u $agora | Should Be $esperado
         Get-MaxUso $u | Should Be 27
     }
 
     It 'format do salvo traz o horario' {
         $q = $agora.AddMinutes(-30)
         $u = ConvertTo-Uso (New-Util 2 27 $agora.AddHours(1)) 'salvo' $q $agora
-        Format-Uso $u | Should Be ($esperado + (' (salvo {0})' -f $q.ToString('HH:mm')))
+        Format-Uso $u $agora | Should Be ($esperado + (' (salvo {0})' -f $q.ToString('HH:mm')))
     }
 
     It 'salvo em outro dia traz a data' {
         $q = $agora.AddDays(-3)
         $u = ConvertTo-Uso (New-Util 2 27 $agora.AddHours(1)) 'salvo' $q $agora
-        Format-Uso $u | Should Be ($esperado + (' (salvo {0})' -f $q.ToString('dd/MM HH:mm')))
+        Format-Uso $u $agora | Should Be ($esperado + (' (salvo {0})' -f $q.ToString('dd/MM HH:mm')))
     }
 
     It 'salvo sem fetchedAtMs nao inventa 1970' {
@@ -111,10 +111,21 @@ Describe 'Format-Uso, Get-MaxUso, Select-ContaSugerida' {
         $est = @{ cachedUsageUtilization = @{ utilization = (New-Util 2 27 $agora.AddHours(2)) } }
         [IO.File]::WriteAllText((Join-Path $p '.claude.json'), ($est | ConvertTo-Json -Depth 10))
         $c = [pscustomobject]@{ Nome = 'semdata'; Pasta = $p; Mestre = $false }
+        $u = ConvertTo-Uso (New-Util 2 27 $agora.AddHours(1)) 'salvo' $null $agora
+        Format-Uso $u $agora | Should Be ($esperado + ' (salvo, sem data)')
         $u = Get-UsoConta $c -agora $agora
         $u.Fonte | Should Be 'salvo'
         $u.Quando | Should Be $null
-        Format-Uso $u | Should Be ($esperado + ' (salvo, sem data)')
+    }
+
+    It 'tempo ate reiniciar' {
+        Format-Reinicio $agora.AddMinutes(45) $agora | Should Be ' (reinicia em 45min)'
+        Format-Reinicio $agora.AddMinutes(125) $agora | Should Be ' (reinicia em 2h05)'
+        Format-Reinicio $agora.AddHours(76) $agora | Should Be ' (reinicia em 3d 4h)'
+        Format-Reinicio $agora.AddMinutes(-1) $agora | Should Be ''
+        Format-Reinicio $null $agora | Should Be ''
+        $u = ConvertTo-Uso @{ five_hour = @{ utilization = 5; resets_at = $null } } 'agora' $null $agora
+        Format-Uso $u $agora | Should Be ('Sess' + [char]0xE3 + 'o (5h): 5% ' + [char]0xB7 + ' Semana: ?')
     }
 
     It 'sugere a de menor maximo' {
