@@ -55,7 +55,7 @@ Os scripts ficam na pasta `scripts/` ao lado deste SKILL.md e são instalados em
 - **Conta alvo:** a principal, se o usuário não indicou nenhuma. Se ele indicou outra, confirme antes com AskUserQuestion, mostrando nome e e-mail ("Publicar na conta X (email), não na principal?"). Só siga com um sim. Nunca troque a conta alvo por conta própria.
 1. Confira a conta da sessão atual com `claude auth status --json`. Se já for a conta alvo, publique aqui.
 2. Senão, grave o conteúdo num arquivo e procure com ListAgents uma sessão cujo nome termine em "(<conta alvo>)".
-3. Se não houver, rode `~/.claude-contas/abrir-conta.ps1 <conta alvo> <pasta>`, que abre uma janela nova, e procure a sessão de novo.
+3. Se não houver, rode `~/.claude-contas/abrir-conta.ps1 <conta alvo> <pasta> [-Rc | -NoRc]`, que abre uma aba nova do Windows Terminal (sem ele, uma janela), e procure a sessão de novo.
 4. Peça por SendMessage que ela confira a própria conta com `claude auth status --json` e publique o arquivo.
 5. O `cc` tira as variáveis `CLAUDE*` herdadas desta sessão (menos `CLAUDE_CONFIG_DIR`); sem isso, a janela nova abriria com "Transcript saving is off" e não apareceria no ListAgents.
 6. O modo automático dela pede a aprovação do usuário na janela dela. Isso é esperado; avise o usuário.

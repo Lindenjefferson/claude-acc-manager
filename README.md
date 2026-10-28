@@ -27,7 +27,7 @@ Depois, numa sessão do Claude Code: **"instala a skill gerenciador-contas"**. E
   - `instalar.ps1`, `setup-contas.ps1`, `desfazer-contas.ps1`: instalam, mantêm e desfazem.
   - `cc.ps1` e `bin/cc.cmd`: o comando `cc`.
   - `statusline.ps1`: a status line com conta e uso.
-  - `abrir-conta.ps1`: abre uma janela de outra conta.
+  - `abrir-conta.ps1`: abre uma aba do Windows Terminal (ou janela) de outra conta.
   - `explorer/`: o atalho da barra do Explorer.
   - `modelo-CLAUDE.md`: modelo do bloco de regras do `~/.claude/CLAUDE.md`.
   - `contas.exemplo.json`: exemplo de configuração.

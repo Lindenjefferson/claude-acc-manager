@@ -22,7 +22,7 @@ Este PC tem uma conta principal do Claude Code e contas secundárias, todas com 
   - **Sem conta indicada, publique na conta principal, {{PUBLICAR}} ({{EMAIL_PUBLICAR}}).**
   - **Se o usuário indicar outra conta, peça confirmação antes** (AskUserQuestion), mostrando nome e e-mail dela, por exemplo: "Publicar na conta X (email), não na principal?". Só siga com um sim explícito. Nunca escolha outra conta por conta própria.
   - Confira a conta da sessão atual com `claude auth status --json`. Se já for a conta alvo, publique aqui.
-  - Se não for, grave o conteúdo num arquivo e procure com ListAgents uma sessão cujo nome termine em "(<conta alvo>)". Se não houver, abra uma com `powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude-contas/abrir-conta.ps1 <conta alvo> <pasta>`.
+  - Se não for, grave o conteúdo num arquivo e procure com ListAgents uma sessão cujo nome termine em "(<conta alvo>)". Se não houver, abra uma com `powershell -NoProfile -ExecutionPolicy Bypass -File ~/.claude-contas/abrir-conta.ps1 <conta alvo> <pasta>` (com `-Rc` ou `-NoRc` para ligar ou desligar o Remote Control nela).
   - Peça por SendMessage que ela confira a própria conta e publique. O usuário aprova na janela dela.
 - **Não copiar nem mover `.credentials.json`** entre pastas de conta. Cada conta faz `/login` na própria pasta.
 - **Não apagar as pastas `~/.claude-contas/<conta>` com `Remove-Item -Recurse`**: em junctions isso apaga o conteúdo real em `~/.claude`. Para desfazer, use `~/.claude-contas/desfazer-contas.ps1`.
